@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>艾森豪威爾矩陣 - TaskMaster</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#FF6B35',
+                        secondary: '#4A90E2',
+                        success: '#27AE60',
+                        warning: '#F39C12',
+                        danger: '#E74C3C',
+                        dark: '#2C3E50',
+                        light: '#F8F9FA',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .matrix-quadrant {
+            min-height: 400px;
+            transition: all 0.3s ease;
+        }
+        .matrix-quadrant:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+        .task-item {
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        .task-item:hover {
+            transform: translateX(4px);
+        }
+        .quadrant-1 {
+            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+            border-left: 4px solid #dc2626;
+        }
+        .quadrant-2 {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border-left: 4px solid #d97706;
+        }
+        .quadrant-3 {
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+            border-left: 4px solid #2563eb;
+        }
+        .quadrant-4 {
+            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+            border-left: 4px solid #059669;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Top Navigation -->
+    <header class="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+                <button class="lg:hidden p-2 rounded-lg hover:bg-gray-100">
+                    <i class="fas fa-bars text-gray-600"></i>
+                </button>
+                <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                        <i class="fas fa-check text-white text-sm"></i>
+                    </div>
+                    <h1 class="text-xl font-bold text-dark">TaskMaster</h1>
+                </div>
+            </div>
+            
+            <!-- Search Bar -->
+            <div class="flex-1 max-w-xl mx-8">
+                <div class="relative">
+                    <input type="text" placeholder="搜索任務、項目或標籤..." 
+                           class="w-full px-4 py-2 pl-10 pr-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                    <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                </div>
+            </div>
+            
+            <!-- User Menu -->
+            <div class="flex items-center space-x-4">
+                <button class="p-2 rounded-lg hover:bg-gray-100 relative">
+                    <i class="fas fa-bell text-gray-600"></i>
+                    <span class="absolute -top-1 -right-1 w-3 h-3 bg-danger rounded-full"></span>
+                </button>
+                <button class="p-2 rounded-lg hover:bg-gray-100">
+                    <i class="fas fa-cog text-gray-600"></i>
+                </button>
+                <div class="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
+                    <span class="text-white text-sm font-medium">U</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="flex h-screen pt-16">
+        <!-- Sidebar -->
+        <aside class="w-64 bg-white shadow-sm border-r border-gray-200 overflow-y-auto">
+            <div class="p-6">
+                <!-- Main Navigation -->
+                <nav class="space-y-2">
+                    <a href="index.html" class="flex items-center px-4 py-3 text-gray-700 hover:text-primary rounded-lg hover:bg-primary hover:bg-opacity-10">
+                        <i class="fas fa-inbox w-5 h-5 mr-3"></i>
+                        <span>收集箱</span>
+                        <span class="ml-auto bg-gray-300 text-white text-xs px-2 py-1 rounded-full">5</span>
+                    </a>
+                    <a href="today.html" class="flex items-center px-4 py-3 text-gray-700 hover:text-primary rounded-lg hover:bg-primary hover:bg-opacity-10">
+                        <i class="fas fa-calendar-day w-5 h-5 mr-3"></i>
+                        <span>今天</span>
+                        <span class="ml-auto bg-warning text-white text-xs px-2 py-1 rounded-full">8</span>
+                    </a>
+                    <a href="calendar.html" class="flex items-center px-4 py-3 text-gray-700 hover:text-primary rounded-lg hover:bg-primary hover:bg-opacity-10">
+                        <i class="fas fa-calendar-alt w-5 h-5 mr-3"></i>
+                        <span>日曆視圖</span>
+                    </a>
+                    <a href="#" class="flex items-center px-4 py-3 text-primary bg-primary bg-opacity-10 rounded-lg">
+                        <i class="fas fa-th w-5 h-5 mr-3"></i>
+                        <span class="font-medium">重要性矩陣</span>
+                    </a>
+                    <a href="habits.html" class="flex items-center px-4 py-3 text-gray-700 hover:text-primary rounded-lg hover:bg-primary hover:bg-opacity-10">
+                        <i class="fas fa-heart w-5 h-5 mr-3"></i>
+                        <span>習慣管理</span>
+                    </a>
+                    <a href="pomodoro.html" class="flex items-center px-4 py-3 text-gray-700 hover:text-primary rounded-lg hover:bg-primary hover:bg-opacity-10">
+                        <i class="fas fa-clock w-5 h-5 mr-3"></i>
+                        <span>番茄鐘</span>
+                    </a>
+                </nav>
+
+                <!-- Matrix Legend -->
+                <div class="mt-8">
+                    <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">矩陣說明</h3>
+                    <div class="space-y-3">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-4 h-4 bg-red-500 rounded-full"></div>
+                            <div>
+                                <div class="text-sm font-medium text-gray-800">緊急且重要</div>
+                                <div class="text-xs text-gray-600">立即執行</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <div class="w-4 h-4 bg-yellow-500 rounded-full"></div>
+                            <div>
+                                <div class="text-sm font-medium text-gray-800">重要但不緊急</div>
+                                <div class="text-xs text-gray-600">安排時間</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <div class="w-4 h-4 bg-blue-500 rounded-full"></div>
+                            <div>
+                                <div class="text-sm font-medium text-gray-800">緊急但不重要</div>
+                                <div class="text-xs text-gray-600">委派他人</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <div class="w-4 h-4 bg-green-500 rounded-full"></div>
+                            <div>
+                                <div class="text-sm font-medium text-gray-800">不緊急且不重要</div>
+                                <div class="text-xs text-gray-600">消除或減少</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Stats -->
+                <div class="mt-8 bg-gray-50 rounded-lg p-4">
+                    <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">統計概覽</h3>
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">總任務</span>
+                            <span class="font-medium text-gray-800">18</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">高優先級</span>
+                            <span class="font-medium text-red-600">4</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">本週到期</span>
+                            <span class="font-medium text-yellow-600">7</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 overflow-y-auto">
+            <div class="p-6">
+                <!-- Header -->
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-dark">艾森豪威爾矩陣</h2>
+                        <p class="text-gray-600 mt-1">按重要性和緊急性組織您的任務</p>
+                    </div>
+                    
+                    <!-- Controls -->
+                    <div class="flex items-center space-x-3">
+                        <button class="px-4 py-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 flex items-center space-x-2">
+                            <i class="fas fa-filter"></i>
+                            <span>篩選</span>
+                        </button>
+                        <button class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-opacity-90 flex items-center space-x-2">
+                            <i class="fas fa-plus"></i>
+                            <span>添加任務</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Matrix Grid -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
+                    <!-- Quadrant I: Urgent & Important -->
+                    <div class="matrix-quadrant quadrant-1 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-8 h-8 bg-red-500 rounded-lg flex items-center justify-center">
+                                    <span class="text-white font-bold text-sm">I</span>
+                                </div>
+                                <div>
+                                    <h3 class="font-semibold text-red-800">緊急且重要</h3>
+                                    <p class="text-sm text-red-600">立即執行</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <span class="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-medium">4 個任務</span>
+                                <button class="text-red-600 hover:text-red-800">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-3">
+                            <div class="task-item bg-white bg-opacity-80 rounded-lg p-4 border border-red-200 shadow-sm">
+                                <div class="flex items-start space-x-3">
+                                    <div class="w-4 h-4 border-2 border-red-500 rounded-full mt-1"></div>
+                                    <div class="flex-1">
+                                        <h4 class="font-medium text-gray-800">完成季度報告</h4>
+                                        <p class="text-sm text-gray-600 mt-1">準備 Q3 業績報告和下季度規劃</p>
+                                        <div class="flex items-center space-x-3 mt-2 text-xs text-gray-500">
+                                            <span class="flex items-center space-x-1 text-red-600">
+                                                <i class="far fa-clock"></i>
+                                                <span>明天截止</span>
+                                            </span>
+                                            <span class="flex items-center space-x-1">
+                                                <i class="far fa-folder"></i>
+                                                <span>工作項目</span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <button class="text-gray-400 hover:text-gray-600">
+                                        <i class="fas fa-ellipsis-h"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="task-item bg-white bg-opacity-80 rounded-lg p-4 border border-red-200 shadow-sm">
+                                <div class="flex items-start space-x-3">
+                                    <div class="w-4 h-4 border-2 border-red-500 rounded-full mt-1"></div>
+                                    <div class="flex-1">
+                                        <h4 class="font-medium text-gray-800">修復生產環境 Bug</h4>
+                                        <p class="text-sm text-gray-600 mt-1">用戶登錄問題影響 30% 用戶</p>
+                                        <div class="flex items-center space-x-3 mt-2 text-xs text-gray-500">
+                                            <span class="flex items-center space-x-1 text-red-600">
+                                                <i class="fas fa-exclamation-triangle"></i>
+                                                <span>緊急</span>
+                                            </span>
+                                            <span class="flex items-center space-x-1">
+                                                <i class="far fa-folder"></i>
+                                                <span>開發</span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <button class="text-gray-400 hover:text-gray-600">
+                                        <i class="fas fa-ellipsis-h"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="task-item bg-white bg-opacity-80 rounded-lg p-4 border border-red-200 shadow-sm">
+                                <div class="flex items-start space-x-3">
+                                    <div class="w-4 h-4 border-2 border-red-500 rounded-full mt-1"></div>
+                                    <div class="flex-1">
+                                        <h4 class="font-medium text-gray-800">客戶緊急需求</h4>
+                                        <p class="text-sm text-gray-600 mt-1">大客戶要求今天完成功能調整</p>
+                                        <div class="flex items-center space-x-3 mt-2 text-xs text-gray-500">
+                                            <span class="flex items-center space-x-1 text-red-600">
+                                                <i class="far fa-clock"></i>
+                                                <span>今天 18:00</span>
+                                            </span>
+                                            <span class="flex items-center space-x-1">
+                                                <i class="fas fa-user"></i>
+                                                <span>客戶服務</span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <button class="text-gray-400 hover:text-gray-600">
+                                        <i class="fas fa-ellipsis-h"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="task-item bg-white bg-opacity-80 rounded-lg p-4 border border-red-200 shadow-sm">
+                                <div class="flex items-start space-x-3">
+                                    <div class="w-4 h-4 border-2 border-red-500 rounded-full mt-1"></div>
+                                    <div class="flex-1">
+                                        <h4 class="font-medium text-gray-800">合同續簽</h4>
+                                        <p class="text-sm text-gray-600 mt-1">重要供應商合同明天到期</p>
+                                        <div class="flex items-center space-x-3 mt-2 text-xs text-gray-500">
+                                            <span class="flex items-center space-x-1 text-red-600">
+                                                <i class="far fa-calendar"></i>
+                                                <span>明天到期</span>
+                                            </span>
+                                            <span class="flex items-center space-x-1">
+                                                <i class="fas fa-handshake"></i>
+                                                <span>商務</span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <button class="text-gray-400 hover:text-gray-600">
+                                        <i class="fas fa-ellipsis-h"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quadrant II: Not Urgent & Important -->
+                    <div class="matrix-quadrant quadrant-2 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-8 h-8 bg-yellow-500 rounded-lg flex items-center justify-center">
+                                    <span class="text-white font-bold text-sm">II</span>
+                                </div>
+                                <div>
+                                    <h3 class="font-semibold text-yellow-800">重要但不緊急</h3>
+                                    <p class="text-sm text-yellow-600">安排時間執行</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-medium">5 個任務</span>
+                                <button class="text-yellow-600 hover:text-yellow-800">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-3">
+                            <div class="task-item bg-white bg-opacity-80 rounded-lg p-4 border border-yellow-200 shadow-sm">
+                                <div class="flex items-start space-x-3">
+                                    <div class="w-4 h-4 border-2 border-yellow-500 rounded-full mt-1"></div>
+                                    <div class="flex-1">
+                                        <h4 class="font-medium text-gray-800">制定下季度戰略</h4>
+                                        <p class="text-sm text-gray-600 mt-1">分析市場趨勢，制定發展策略</p>
+                                        <div class="flex items-center space-x-3 mt-2 text-xs text-gray-500">
+                                            <span class="flex items-center space-x-1">
+                                                <i class="far fa-calendar"></i>
+                                                <span>下週開始</span>
+                                            </span>
+                                            <span class="flex items-center space-x-1">
+                                                <i class="fas fa-chart-line"></i>
+                                                <span>戰略規劃</span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <button class="text-gray-400 hover:text-gray-600">
+                                        <i class="fas fa-ellipsis-h"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="task-item bg-white bg-opacity-80 rounded-lg p-4 border border-yellow-200 shadow-sm">
+                                <div class="flex items-start space-x-3">
+                                    <div class="w-4 h-4 border-2 border-yellow-500 rounded-full mt-1"></div>
+                                    <div class="flex-1">
+                                        <h4 class="font-medium text-gray-800">團隊技能培訓</h4>
+                                        <p class="text-sm text-gray-600 mt-1">組織新技術學習和分享會</p>
+                                        <div class="flex items-center space-x-3 mt-2 text-xs text-gray-500">
+                                            <span class="flex items-center space-x-1">
+                                                <i class="far fa-calendar"></i>
+                                                <span>本月內</span>
+                                            </span>
+                                            <span class="flex items-center space-x-1">
+                                                <i class="fas fa-users"></i>
+                                                <span>團隊發展</span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <button class="text-gray-400 hover:text-gray-600">
+                                        <i class="fas fa-ellipsis-h"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="task-item bg-white bg-opacity-80 rounded-lg p-4 border border-yellow-200 shadow-sm">
+                                <div class="flex items-start space-x-3">
+                                    <div class="w-4 h-4 border-2 border-yellow-500 rounded-full mt-1"></div>
+                                    <div class="flex-1">
+                                        <h4 class="font-medium text-gray-800">個人技能提升</h4>
+                                        <p class="text-sm text-gray-600 mt-1">學習新的管理方法和工具</p>
+                                        <div class="flex items-center space-x-3 mt-2 text-xs text-gray-500">
+                                            <span class="flex items-center space-x-1">
+                                                <i class="fas fa-book"></i>
+                                                <span>持續進行</span>
+                                            </span>
+                                            <span class="flex items-center space-x-1">
+                                                <i class="fas fa-user-graduate"></i>
+                                                <span>個人成長</span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <button class="text-gray-400 hover:text-gray-600">
+                                        <i class="fas fa-ellipsis-h"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="task-item bg-white bg-opacity-80 rounded-lg p-4 border border-yellow-200 shadow-sm">
+                                <div class="flex items-start space-x-3">
+                                    <div class="w-4 h-4 border-2 border-yellow-500 rounded-full mt-1"></div>
+                                    <div class="flex-1">
+                                        <h4 class="font-medium text-gray-800">產品長期規劃</h4>
+                                        <p class="text-sm text-gray-600 mt-1">研究用戶需求，規劃產品路線圖</p>
+                                        <div class="flex items-center space-x-3 mt-2 text-xs text-gray-500">
+                                            <span class="flex items-center space-x-1">
+                                                <i class="far fa-calendar"></i>
+                                                <span>下月完成</span>
+                                            </span>
+                                            <span class="flex items-center space-x-1">
+                                                <i class="fas fa-rocket"></i>
+                                                <span>產品</span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <button class="text-gray-400 hover:text-gray-600">
+                                        <i class="fas fa-ellipsis-h"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="task-item bg-white bg-opacity-80 rounded-lg p-4 border border-yellow-200 shadow-sm">
+                                <div class="flex items-start space-x-3">
+                                    <div class="w-4 h-4 border-2 border-yellow-500 rounded-full mt-1"></div>
+                                    <div class="flex-1">
+                                        <h4 class="font-medium text-gray-800">健康檢查</h4>
+                                        <p class="text-sm text-gray-600 mt-1">預約年度體檢，關注身體健康</p>
+                                        <div class="flex items-center space-x-3 mt-2 text-xs text-gray-500">
+                                            <span class="flex items-center space-x-1">
+                                                <i class="fas fa-heart"></i>
+                                                <span>健康</span>
+                                            </span>
+                                            <span class="flex items-center space-x-1">
+                                                <i class="far fa-calendar"></i>
+                                                <span>預約中</span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <button class="text-gray-400 hover:text-gray-600">
+                                        <i class="fas fa-ellipsis-h"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quadrant III: Urgent & Not Important -->
+                    <div class="matrix-quadrant quadrant-3 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
+                                    <span class="text-white font-bold text-sm">III</span>
+                                </div>
+                                <div>
+                                    <h3 class="font-semibold text-blue-800">緊急但不重要</h3>
+                                    <p class="text-sm text-blue-600">委派他人執行</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">3 個任務</span>
+                                <button class="text-blue-600 hover:text-blue-800">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-3">
+                            <div class="task-item bg-white bg-opacity-80 rounded-lg p-4 border border-blue-200 shadow-sm">
+                                <div class="flex items-start space-x-3">
+                                    <div class="w-4 h-4 border-2 border-blue-500 rounded-full mt-1"></div>
+                                    <div class="flex-1">
+                                        <h4 class="font-medium text-gray-800">整理會議紀錄</h4>
+                                        <p class="text-sm text-gray-600 mt-1">昨天會議的紀錄需要整理分享</p>
+                                        <div class="flex items-center space-x-3 mt-2 text-xs text-gray-500">
+                                            <span class="flex items-center space-x-1 text-blue-600">
+                                                <i class="fas fa-user"></i>
+                                                <span>可委派給助理</span>
+                                            </span>
+                                            <span class="flex items-center space-x-1">
+                                                <i class="fas fa-file-alt"></i>
+                                                <span>行政工作</span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <button class="text-gray-400 hover:text-gray-600">
+                                        <i class="fas fa-ellipsis-h"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="task-item bg-white bg-opacity-80 rounded-lg p-4 border border-blue-200 shadow-sm">
+                                <div class="flex items-start space-x-3">
+                                    <div class="w-4 h-4 border-2 border-blue-500 rounded-full mt-1"></div>
+                                    <div class="flex-1">
+                                        <h4 class="font-medium text-gray-800">回覆非緊急郵件</h4>
+                                        <p class="text-sm text-gray-600 mt-1">處理積壓的一般性郵件</p>
+                                        <div class="flex items-center space-x-3 mt-2 text-xs text-gray-500">
+                                            <span class="flex items-center space-x-1 text-blue-600">
+                                                <i class="fas fa-envelope"></i>
+                                                <span>15 封待處理</span>
+                                            </span>
+                                            <span class="flex items-center space-x-1">
+                                                <i class="far fa-clock"></i>
+                                                <span>下午處理</span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <button class="text-gray-400 hover:text-gray-600">
+                                        <i class="fas fa-ellipsis-h"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="task-item bg-white bg-opacity-80 rounded-lg p-4 border border-blue-200 shadow-sm">
+                                <div class="flex items-start space-x-3">
+                                    <div class="w-4 h-4 border-2 border-blue-500 rounded-full mt-1"></div>
+                                    <div class="flex-1">
+                                        <h4 class="font-medium text-gray-800">參加例行會議</h4>
+                                        <p class="text-sm text-gray-600 mt-1">部門週會，主要是信息同步</p>
+                                        <div class="flex items-center space-x-3 mt-2 text-xs text-gray-500">
+                                            <span class="flex items-center space-x-1">
+                                                <i class="far fa-clock"></i>
+                                                <span>週五 14:00</span>
+                                            </span>
+                                            <span class="flex items-center space-x-1">
+                                                <i class="fas fa-users"></i>
+                                                <span>例行會議</span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <button class="text-gray-400 hover:text-gray-600">
+                                        <i class="fas fa-ellipsis-h"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quadrant IV: Not Urgent & Not Important -->
+                    <div class="matrix-quadrant quadrant-4 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
+                                    <span class="text-white font-bold text-sm">IV</span>
+                                </div>
+                                <div>
+                                    <h3 class="font-semibold text-green-800">不緊急且不重要</h3>
+                                    <p class="text-sm text-green-600">消除或最小化</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">6 個任務</span>
+                                <button class="text-green-600 hover:text-green-800">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-3">
+                            <div class="task-item bg-white bg-opacity-80 rounded-lg p-4 border border-green-200 shadow-sm opacity-75">
+                                <div class="flex items-start space-x-3">
+                                    <div class="w-4 h-4 bg-success border-2 border-success rounded-full mt-1 flex items-center justify-center">
+                                        <i class="fas fa-check text-white text-xs"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <h4 class="font-medium text-gray-600 line-through">歡迎使用 TaskFlow</h4>
+                                        <p class="text-sm text-gray-500 line-through mt-1">探索所有強大功能</p>
+                                        <div class="flex items-center space-x-3 mt-2 text-xs text-gray-400">
+                                            <span class="flex items-center space-x-1">
+                                                <i class="far fa-check-circle"></i>
+                                                <span>已完成</span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <button class="text-gray-400 hover:text-gray-600">
+                                        <i class="fas fa-ellipsis-h"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="task-item bg-white bg-opacity-80 rounded-lg p-4 border border-green-200 shadow-sm">
+                                <div class="flex items-start space-x-3">
+                                    <div class="w-4 h-4 border-2 border-green-500 rounded-full mt-1"></div>
+                                    <div class="flex-1">
+                                        <h4 class="font-medium text-gray-800">瀏覽技術博客</h4>
+                                        <p class="text-sm text-gray-600 mt-1">閱讀一些有趣的技術文章</p>
+                                        <div class="flex items-center space-x-3 mt-2 text-xs text-gray-500">
+                                            <span class="flex items-center space-x-1">
+                                                <i class="fas fa-book-open"></i>
+                                                <span>休閒閱讀</span>
+                                            </span>
+                                            <span class="flex items-center space-x-1">
+                                                <i class="far fa-clock"></i>
+                                                <span>有空時</span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <button class="text-gray-400 hover:text-gray-600">
+                                        <i class="fas fa-ellipsis-h"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="task-item bg-white bg-opacity-80 rounded-lg p-4 border border-green-200 shadow-sm">
+                                <div class="flex items-start space-x-3">
+                                    <div class="w-4 h-4 border-2 border-green-500 rounded-full mt-1"></div>
+                                    <div class="flex-1">
+                                        <h4 class="font-medium text-gray-800">整理桌面文件</h4>
+                                        <p class="text-sm text-gray-600 mt-1">清理電腦桌面的雜亂文件</p>
+                                        <div class="flex items-center space-x-3 mt-2 text-xs text-gray-500">
+                                            <span class="flex items-center space-x-1">
+                                                <i class="fas fa-folder"></i>
+                                                <span>整理</span>
+                                            </span>
+                                            <span class="flex items-center space-x-1">
+                                                <i class="far fa-clock"></i>
+                                                <span>週末</span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <button class="text-gray-400 hover:text-gray-600">
+                                        <i class="fas fa-ellipsis-h"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="task-item bg-white bg-opacity-80 rounded-lg p-4 border border-green-200 shadow-sm">
+                                <div class="flex items-start space-x-3">
+                                    <div class="w-4 h-4 border-2 border-green-500 rounded-full mt-1"></div>
+                                    <div class="flex-1">
+                                        <h4 class="font-medium text-gray-800">查看社交媒體</h4>
+                                        <p class="text-sm text-gray-600 mt-1">瀏覽朋友圈和技術社區動態</p>
+                                        <div class="flex items-center space-x-3 mt-2 text-xs text-gray-500">
+                                            <span class="flex items-center space-x-1 text-yellow-600">
+                                                <i class="fas fa-exclamation-triangle"></i>
+                                                <span>容易分心</span>
+                                            </span>
+                                            <span class="flex items-center space-x-1">
+                                                <i class="fas fa-share-alt"></i>
+                                                <span>社交</span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <button class="text-gray-400 hover:text-gray-600">
+                                        <i class="fas fa-ellipsis-h"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="task-item bg-white bg-opacity-80 rounded-lg p-4 border border-green-200 shadow-sm">
+                                <div class="flex items-start space-x-3">
+                                    <div class="w-4 h-4 border-2 border-green-500 rounded-full mt-1"></div>
+                                    <div class="flex-1">
+                                        <h4 class="font-medium text-gray-800">玩手機遊戲</h4>
+                                        <p class="text-sm text-gray-600 mt-1">休息時放鬆一下</p>
+                                        <div class="flex items-center space-x-3 mt-2 text-xs text-gray-500">
+                                            <span class="flex items-center space-x-1">
+                                                <i class="fas fa-gamepad"></i>
+                                                <span>娛樂</span>
+                                            </span>
+                                            <span class="flex items-center space-x-1">
+                                                <i class="far fa-clock"></i>
+                                                <span>15分鐘/次</span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <button class="text-gray-400 hover:text-gray-600">
+                                        <i class="fas fa-ellipsis-h"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="task-item bg-white bg-opacity-80 rounded-lg p-4 border border-green-200 shadow-sm">
+                                <div class="flex items-start space-x-3">
+                                    <div class="w-4 h-4 border-2 border-green-500 rounded-full mt-1"></div>
+                                    <div class="flex-1">
+                                        <h4 class="font-medium text-gray-800">看無關視頻</h4>
+                                        <p class="text-sm text-gray-600 mt-1">YouTube 上的娛樂內容</p>
+                                        <div class="flex items-center space-x-3 mt-2 text-xs text-gray-500">
+                                            <span class="flex items-center space-x-1 text-red-600">
+                                                <i class="fas fa-times-circle"></i>
+                                                <span>應該刪除</span>
+                                            </span>
+                                            <span class="flex items-center space-x-1">
+                                                <i class="fas fa-video"></i>
+                                                <span>時間浪費</span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <button class="text-gray-400 hover:text-gray-600">
+                                        <i class="fas fa-ellipsis-h"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Floating Action Button -->
+    <button class="fixed bottom-6 right-6 w-14 h-14 bg-primary rounded-full shadow-lg hover:shadow-xl flex items-center justify-center text-white hover:bg-opacity-90 transition-all duration-200">
+        <i class="fas fa-plus text-xl"></i>
+    </button>
+
+    <!-- Task Detail Modal (Hidden by default) -->
+    <div class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50" id="taskDetailModal">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-2xl mx-4 max-h-screen overflow-y-auto">
+            <div class="p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-xl font-semibold text-dark">任務詳情</h3>
+                    <button class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                
+                <div class="space-y-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">任務標題</label>
+                        <input type="text" value="完成季度報告" 
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">描述</label>
+                        <textarea class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" 
+                                  rows="4">準備 Q3 業績報告和下季度規劃</textarea>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">優先級</label>
+                            <select class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                                <option>緊急且重要</option>
+                                <option>重要但不緊急</option>
+                                <option>緊急但不重要</option>
+                                <option>不緊急且不重要</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">截止日期</label>
+                            <input type="date" value="2025-08-28" 
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">項目</label>
+                        <select class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                            <option>工作項目</option>
+                            <option>個人成長</option>
+                            <option>健康生活</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="flex items-center justify-end space-x-3 mt-8">
+                    <button class="px-4 py-2 text-gray-600 hover:text-gray-800">取消</button>
+                    <button class="px-6 py-2 bg-danger text-white rounded-lg hover:bg-opacity-90 font-medium">刪除</button>
+                    <button class="px-6 py-2 bg-primary text-white rounded-lg hover:bg-opacity-90 font-medium">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

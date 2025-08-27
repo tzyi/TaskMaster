@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登入 - TaskMaster</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#FF6B35',
+                        secondary: '#4A90E2',
+                        success: '#27AE60',
+                        warning: '#F39C12',
+                        danger: '#E74C3C',
+                        dark: '#2C3E50',
+                        light: '#F8F9FA',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .login-card {
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.9);
+            transition: all 0.3s ease;
+        }
+        .login-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        .google-btn {
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .google-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(66, 133, 244, 0.3);
+        }
+        .google-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+        .google-btn:hover::before {
+            left: 100%;
+        }
+        .floating-shapes {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 0;
+        }
+        .floating-shapes::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(255,107,53,0.1) 0%, transparent 70%);
+            animation: float 6s ease-in-out infinite;
+        }
+        .floating-shapes::after {
+            content: '';
+            position: absolute;
+            bottom: -50%;
+            left: -50%;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(74,144,226,0.1) 0%, transparent 70%);
+            animation: float 8s ease-in-out infinite reverse;
+        }
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(30px, -30px) rotate(120deg); }
+            66% { transform: translate(-20px, 20px) rotate(240deg); }
+        }
+        .brand-text {
+            background: linear-gradient(135deg, #FF6B35 0%, #4A90E2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .input-focus:focus {
+            border-color: #FF6B35;
+            box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+        }
+        .pulse-animation {
+            animation: pulse 2s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+    </style>
+    <!-- Google Identity Services -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+<body class="gradient-bg min-h-screen flex items-center justify-center p-4 relative">
+    <!-- Floating Background Shapes -->
+    <div class="floating-shapes"></div>
+    
+    <!-- Main Login Container -->
+    <div class="login-card rounded-2xl p-8 max-w-md w-full shadow-xl relative z-10">
+        <!-- Brand Header -->
+        <div class="text-center mb-8">
+            <div class="w-16 h-16 bg-gradient-to-br from-primary to-secondary rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+                <i class="fas fa-check text-white text-2xl"></i>
+            </div>
+            <h1 class="text-3xl font-bold brand-text mb-2">TaskMaster</h1>
+            <p class="text-gray-600">智能待辦事項管理平台</p>
+        </div>
+
+        <!-- Welcome Message -->
+        <div class="text-center mb-8">
+            <h2 class="text-2xl font-semibold text-dark mb-2">歡迎回來</h2>
+            <p class="text-gray-600">登入您的帳戶以繼續使用 TaskMaster</p>
+        </div>
+
+        <!-- Login Form -->
+        <form id="loginForm" class="space-y-6">
+            <!-- Email Input -->
+            <div>
+                <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
+                    <i class="fas fa-envelope mr-2 text-primary"></i>電子郵件
+                </label>
+                <input type="email" id="email" name="email" required
+                       class="input-focus w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none transition-all duration-300"
+                       placeholder="請輸入您的電子郵件">
+            </div>
+
+            <!-- Password Input -->
+            <div>
+                <label for="password" class="block text-sm font-medium text-gray-700 mb-2">
+                    <i class="fas fa-lock mr-2 text-primary"></i>密碼
+                </label>
+                <div class="relative">
+                    <input type="password" id="password" name="password" required
+                           class="input-focus w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none transition-all duration-300 pr-12"
+                           placeholder="請輸入您的密碼">
+                    <button type="button" id="togglePassword" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-primary">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Remember Me & Forgot Password -->
+            <div class="flex items-center justify-between">
+                <label class="flex items-center">
+                    <input type="checkbox" class="rounded border-gray-300 text-primary focus:ring-primary focus:ring-offset-0">
+                    <span class="ml-2 text-sm text-gray-600">記住我</span>
+                </label>
+                <a href="#" class="text-sm text-primary hover:text-opacity-80 transition-colors">忘記密碼？</a>
+            </div>
+
+            <!-- Login Button -->
+            <button type="submit" 
+                    class="w-full bg-gradient-to-r from-primary to-orange-500 text-white py-3 px-6 rounded-lg font-semibold hover:from-orange-500 hover:to-primary transition-all duration-300 transform hover:-translate-y-1 hover:shadow-lg">
+                <i class="fas fa-sign-in-alt mr-2"></i>登入
+            </button>
+        </form>
+
+        <!-- Divider -->
+        <div class="flex items-center my-8">
+            <div class="flex-1 border-t border-gray-300"></div>
+            <span class="px-4 text-gray-500 text-sm">或</span>
+            <div class="flex-1 border-t border-gray-300"></div>
+        </div>
+
+        <!-- Google Sign-In -->
+        <div class="space-y-4">
+            <!-- Google Sign-In Button -->
+            <div id="g_id_onload"
+                 data-client_id="YOUR_GOOGLE_CLIENT_ID"
+                 data-context="signin"
+                 data-ux_mode="popup"
+                 data-callback="handleCredentialResponse"
+                 data-auto_prompt="false">
+            </div>
+
+            <!-- Custom Google Button -->
+            <button id="googleSignInBtn" 
+                    class="google-btn w-full bg-white border-2 border-gray-300 text-gray-700 py-3 px-6 rounded-lg font-semibold hover:border-blue-500 hover:text-blue-600 flex items-center justify-center transition-all duration-300">
+                <svg class="w-5 h-5 mr-3" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                </svg>
+                使用 Google 帳戶登入
+            </button>
+
+            <!-- Alternative Google Sign-In Button (Fallback) -->
+            <div id="g_id_signin" 
+                 class="w-full flex justify-center"
+                 data-type="standard"
+                 data-shape="rectangular"
+                 data-theme="outline"
+                 data-text="signin_with"
+                 data-size="large"
+                 data-width="100%">
+            </div>
+        </div>
+
+        <!-- Sign Up Link -->
+        <div class="text-center mt-8">
+            <p class="text-gray-600">
+                還沒有帳戶？
+                <a href="#" class="text-primary hover:text-opacity-80 font-semibold transition-colors">立即註冊</a>
+            </p>
+        </div>
+
+        <!-- Features Preview -->
+        <div class="mt-8 pt-6 border-t border-gray-200">
+            <div class="grid grid-cols-3 gap-4 text-center">
+                <div class="text-center">
+                    <div class="w-10 h-10 bg-primary bg-opacity-10 rounded-lg flex items-center justify-center mx-auto mb-2">
+                        <i class="fas fa-tasks text-primary"></i>
+                    </div>
+                    <p class="text-xs text-gray-600">任務管理</p>
+                </div>
+                <div class="text-center">
+                    <div class="w-10 h-10 bg-secondary bg-opacity-10 rounded-lg flex items-center justify-center mx-auto mb-2">
+                        <i class="fas fa-clock text-secondary"></i>
+                    </div>
+                    <p class="text-xs text-gray-600">時間追蹤</p>
+                </div>
+                <div class="text-center">
+                    <div class="w-10 h-10 bg-success bg-opacity-10 rounded-lg flex items-center justify-center mx-auto mb-2">
+                        <i class="fas fa-chart-line text-success"></i>
+                    </div>
+                    <p class="text-xs text-gray-600">進度分析</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg p-8 text-center">
+            <div class="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p class="text-gray-600">正在登入...</p>
+        </div>
+    </div>
+
+    <!-- Success Message -->
+    <div id="successMessage" class="fixed top-4 right-4 bg-success text-white px-6 py-3 rounded-lg shadow-lg transform translate-x-full transition-transform duration-300 z-50">
+        <div class="flex items-center">
+            <i class="fas fa-check-circle mr-2"></i>
+            <span>登入成功！正在跳轉...</span>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const loginForm = document.getElementById('loginForm');
+        const togglePassword = document.getElementById('togglePassword');
+        const passwordInput = document.getElementById('password');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const successMessage = document.getElementById('successMessage');
+        const googleSignInBtn = document.getElementById('googleSignInBtn');
+
+        // Toggle Password Visibility
+        togglePassword.addEventListener('click', function() {
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            
+            const icon = this.querySelector('i');
+            if (type === 'text') {
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        });
+
+        // Form Submission
+        loginForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            // Show loading
+            showLoading();
+            
+            // Simulate login process
+            setTimeout(() => {
+                // Hide loading
+                hideLoading();
+                
+                // Show success and redirect
+                showSuccessAndRedirect();
+            }, 2000);
+        });
+
+        // Google Sign-In Callback
+        function handleCredentialResponse(response) {
+            console.log("Encoded JWT ID token: " + response.credential);
+            
+            // Show loading
+            showLoading();
+            
+            // Simulate processing
+            setTimeout(() => {
+                // Hide loading
+                hideLoading();
+                
+                // Show success and redirect
+                showSuccessAndRedirect();
+            }, 1500);
+        }
+
+        // Custom Google Button Click
+        googleSignInBtn.addEventListener('click', function() {
+            // Trigger Google Sign-In
+            // In a real implementation, this would initiate the Google OAuth flow
+            google.accounts.id.prompt();
+        });
+
+        // Utility Functions
+        function showLoading() {
+            loadingOverlay.classList.remove('hidden');
+        }
+
+        function hideLoading() {
+            loadingOverlay.classList.add('hidden');
+        }
+
+        function showSuccessAndRedirect() {
+            // Show success message
+            successMessage.classList.remove('translate-x-full');
+            
+            // Redirect after 1.5 seconds
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 1500);
+        }
+
+        // Initialize Google Sign-In when page loads
+        window.onload = function() {
+            // Note: In a real implementation, you would need to:
+            // 1. Replace 'YOUR_GOOGLE_CLIENT_ID' with your actual Google Client ID
+            // 2. Configure OAuth consent screen in Google Cloud Console
+            // 3. Handle the JWT token properly on your backend
+            
+            // For demo purposes, we'll show a fallback message
+            if (typeof google === 'undefined') {
+                console.log('Google Identity Services not loaded. Using fallback authentication.');
+            }
+        };
+
+        // Input Focus Effects
+        const inputs = document.querySelectorAll('.input-focus');
+        inputs.forEach(input => {
+            input.addEventListener('focus', function() {
+                this.parentElement.classList.add('pulse-animation');
+            });
+            
+            input.addEventListener('blur', function() {
+                this.parentElement.classList.remove('pulse-animation');
+            });
+        });
+
+        // Smooth scroll and animations
+        document.addEventListener('DOMContentLoaded', function() {
+            const loginCard = document.querySelector('.login-card');
+            loginCard.style.opacity = '0';
+            loginCard.style.transform = 'translateY(30px)';
+            
+            setTimeout(() => {
+                loginCard.style.transition = 'all 0.8s ease';
+                loginCard.style.opacity = '1';
+                loginCard.style.transform = 'translateY(0)';
+            }, 100);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>番茄鐘 - TaskMaster</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#FF6B35',
+                        secondary: '#4A90E2',
+                        success: '#27AE60',
+                        warning: '#F39C12',
+                        danger: '#E74C3C',
+                        dark: '#2C3E50',
+                        light: '#F8F9FA',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .timer-circle {
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            background: conic-gradient(#FF6B35 0deg, #FF6B35 0deg, #e5e7eb 0deg);
+            position: relative;
+            transition: all 0.1s ease-in-out;
+        }
+        .timer-inner {
+            width: 240px;
+            height: 240px;
+            border-radius: 50%;
+            background: white;
+            position: absolute;
+            top: 30px;
+            left: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.1);
+        }
+        .focus-mode {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        }
+        .breathing-animation {
+            animation: breathe 4s ease-in-out infinite;
+        }
+        @keyframes breathe {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        .pulse-animation {
+            animation: pulse 2s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+        .wave-animation {
+            animation: wave 3s ease-in-out infinite;
+        }
+        @keyframes wave {
+            0%, 100% { border-radius: 50%; }
+            50% { border-radius: 45%; }
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Top Navigation -->
+    <header class="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+                <button class="lg:hidden p-2 rounded-lg hover:bg-gray-100">
+                    <i class="fas fa-bars text-gray-600"></i>
+                </button>
+                <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                        <i class="fas fa-check text-white text-sm"></i>
+                    </div>
+                    <h1 class="text-xl font-bold text-dark">TaskMaster</h1>
+                </div>
+            </div>
+            
+            <!-- Focus Mode Toggle -->
+            <div class="flex items-center space-x-4">
+                <button class="flex items-center space-x-2 px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-all" id="focusToggle">
+                    <i class="fas fa-eye text-gray-600"></i>
+                    <span class="text-gray-700">專注模式</span>
+                </button>
+                <div class="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
+                    <span class="text-white text-sm font-medium">U</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="flex h-screen pt-16">
+        <!-- Sidebar -->
+        <aside class="w-64 bg-white shadow-sm border-r border-gray-200 overflow-y-auto" id="sidebar">
+            <div class="p-6">
+                <!-- Main Navigation -->
+                <nav class="space-y-2">
+                    <a href="index.html" class="flex items-center px-4 py-3 text-gray-700 hover:text-primary rounded-lg hover:bg-primary hover:bg-opacity-10">
+                        <i class="fas fa-inbox w-5 h-5 mr-3"></i>
+                        <span>收集箱</span>
+                        <span class="ml-auto bg-gray-300 text-white text-xs px-2 py-1 rounded-full">5</span>
+                    </a>
+                    <a href="today.html" class="flex items-center px-4 py-3 text-gray-700 hover:text-primary rounded-lg hover:bg-primary hover:bg-opacity-10">
+                        <i class="fas fa-calendar-day w-5 h-5 mr-3"></i>
+                        <span>今天</span>
+                        <span class="ml-auto bg-warning text-white text-xs px-2 py-1 rounded-full">8</span>
+                    </a>
+                    <a href="calendar.html" class="flex items-center px-4 py-3 text-gray-700 hover:text-primary rounded-lg hover:bg-primary hover:bg-opacity-10">
+                        <i class="fas fa-calendar-alt w-5 h-5 mr-3"></i>
+                        <span>日曆視圖</span>
+                    </a>
+                    <a href="matrix.html" class="flex items-center px-4 py-3 text-gray-700 hover:text-primary rounded-lg hover:bg-primary hover:bg-opacity-10">
+                        <i class="fas fa-th w-5 h-5 mr-3"></i>
+                        <span>重要性矩陣</span>
+                    </a>
+                    <a href="habits.html" class="flex items-center px-4 py-3 text-gray-700 hover:text-primary rounded-lg hover:bg-primary hover:bg-opacity-10">
+                        <i class="fas fa-heart w-5 h-5 mr-3"></i>
+                        <span>習慣管理</span>
+                    </a>
+                    <a href="#" class="flex items-center px-4 py-3 text-primary bg-primary bg-opacity-10 rounded-lg">
+                        <i class="fas fa-clock w-5 h-5 mr-3"></i>
+                        <span class="font-medium">番茄鐘</span>
+                    </a>
+                </nav>
+
+                <!-- Timer Settings -->
+                <div class="mt-8">
+                    <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">計時設置</h3>
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-gray-700">工作時間</span>
+                            <select class="text-sm border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-primary" id="workDuration">
+                                <option value="25">25 分鐘</option>
+                                <option value="30">30 分鐘</option>
+                                <option value="45">45 分鐘</option>
+                                <option value="60">60 分鐘</option>
+                            </select>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-gray-700">短休息</span>
+                            <select class="text-sm border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-primary" id="shortBreak">
+                                <option value="5">5 分鐘</option>
+                                <option value="10">10 分鐘</option>
+                                <option value="15">15 分鐘</option>
+                            </select>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-gray-700">長休息</span>
+                            <select class="text-sm border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-primary" id="longBreak">
+                                <option value="15">15 分鐘</option>
+                                <option value="20">20 分鐘</option>
+                                <option value="30">30 分鐘</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sound Settings -->
+                <div class="mt-8">
+                    <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">聲音設置</h3>
+                    <div class="space-y-3">
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" checked class="text-primary rounded">
+                            <span class="text-sm text-gray-700">提醒音效</span>
+                        </label>
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" class="text-primary rounded">
+                            <span class="text-sm text-gray-700">背景白噪音</span>
+                        </label>
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" checked class="text-primary rounded">
+                            <span class="text-sm text-gray-700">滴答聲</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Today's Progress -->
+                <div class="mt-8">
+                    <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">今日進度</h3>
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-sm font-medium text-gray-700">已完成</span>
+                            <span class="text-lg font-bold text-primary">3</span>
+                        </div>
+                        <div class="flex space-x-1 mb-2">
+                            <div class="w-6 h-6 bg-primary rounded-full flex items-center justify-center">
+                                <i class="fas fa-check text-white text-xs"></i>
+                            </div>
+                            <div class="w-6 h-6 bg-primary rounded-full flex items-center justify-center">
+                                <i class="fas fa-check text-white text-xs"></i>
+                            </div>
+                            <div class="w-6 h-6 bg-primary rounded-full flex items-center justify-center">
+                                <i class="fas fa-check text-white text-xs"></i>
+                            </div>
+                            <div class="w-6 h-6 bg-gray-200 rounded-full"></div>
+                            <div class="w-6 h-6 bg-gray-200 rounded-full"></div>
+                        </div>
+                        <div class="text-xs text-gray-500">目標: 5 個番茄鐘</div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 overflow-y-auto" id="mainContent">
+            <div class="p-6 h-full">
+                <!-- Header -->
+                <div class="flex items-center justify-between mb-8">
+                    <div>
+                        <h2 class="text-2xl font-bold text-dark">專注</h2>
+                        <p class="text-gray-600 mt-1" id="currentTask">當前任務: 完成季度報告</p>
+                    </div>
+                    
+                    <!-- Mode Selector -->
+                    <div class="flex bg-gray-100 rounded-lg p-1">
+                        <button class="px-4 py-2 bg-white rounded-md shadow-sm text-primary font-medium" id="workMode">
+                            <i class="fas fa-briefcase mr-2"></i>工作
+                        </button>
+                        <button class="px-4 py-2 text-gray-600 hover:text-primary" id="shortBreakMode">
+                            <i class="fas fa-coffee mr-2"></i>短休息
+                        </button>
+                        <button class="px-4 py-2 text-gray-600 hover:text-primary" id="longBreakMode">
+                            <i class="fas fa-bed mr-2"></i>長休息
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Timer Container -->
+                <div class="flex flex-col items-center justify-center h-full">
+                    <!-- Timer Circle -->
+                    <div class="timer-circle breathing-animation mb-8" id="timerCircle">
+                        <div class="timer-inner">
+                            <div class="text-center">
+                                <div class="text-6xl font-bold text-dark mb-2" id="timeDisplay">25:00</div>
+                                <div class="text-sm text-gray-500" id="timerLabel">專注時間</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Control Buttons -->
+                    <div class="flex items-center space-x-6 mb-8">
+                        <button class="w-16 h-16 bg-primary rounded-full flex items-center justify-center text-white shadow-lg hover:bg-opacity-90 transition-all hover:scale-105" id="playPauseBtn">
+                            <i class="fas fa-play text-xl" id="playPauseIcon"></i>
+                        </button>
+                        <button class="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-300 transition-all" id="resetBtn">
+                            <i class="fas fa-redo text-lg"></i>
+                        </button>
+                        <button class="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-300 transition-all" id="skipBtn">
+                            <i class="fas fa-forward text-lg"></i>
+                        </button>
+                    </div>
+
+                    <!-- Session Info -->
+                    <div class="text-center mb-8">
+                        <div class="text-sm text-gray-500 mb-2">第 <span class="font-semibold text-primary" id="currentSession">1</span> 個番茄鐘</div>
+                        <div class="flex items-center justify-center space-x-2">
+                            <div class="w-3 h-3 bg-primary rounded-full"></div>
+                            <div class="w-3 h-3 bg-gray-200 rounded-full"></div>
+                            <div class="w-3 h-3 bg-gray-200 rounded-full"></div>
+                            <div class="w-3 h-3 bg-gray-200 rounded-full"></div>
+                        </div>
+                    </div>
+
+                    <!-- Task Selection -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 w-full max-w-md">
+                        <h3 class="font-semibold text-dark mb-4">選擇任務</h3>
+                        <div class="space-y-2">
+                            <button class="w-full text-left p-3 rounded-lg hover:bg-gray-50 flex items-center justify-between transition-all border-2 border-primary bg-primary bg-opacity-5">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-3 h-3 bg-primary rounded-full"></div>
+                                    <span class="text-gray-800 font-medium">完成季度報告</span>
+                                </div>
+                                <div class="text-xs text-primary bg-primary bg-opacity-10 px-2 py-1 rounded-full">進行中</div>
+                            </button>
+                            <button class="w-full text-left p-3 rounded-lg hover:bg-gray-50 flex items-center justify-between transition-all">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-3 h-3 bg-gray-300 rounded-full"></div>
+                                    <span class="text-gray-600">準備團隊會議</span>
+                                </div>
+                                <div class="text-xs text-gray-400">待開始</div>
+                            </button>
+                            <button class="w-full text-left p-3 rounded-lg hover:bg-gray-50 flex items-center justify-between transition-all">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-3 h-3 bg-gray-300 rounded-full"></div>
+                                    <span class="text-gray-600">代碼審查</span>
+                                </div>
+                                <div class="text-xs text-gray-400">待開始</div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Focus Mode Overlay -->
+    <div class="fixed inset-0 focus-mode hidden items-center justify-center z-50" id="focusOverlay">
+        <div class="text-center text-white">
+            <!-- Simplified Timer for Focus Mode -->
+            <div class="w-80 h-80 border-4 border-white border-opacity-20 rounded-full flex items-center justify-center mb-8 breathing-animation">
+                <div class="text-center">
+                    <div class="text-7xl font-light mb-4" id="focusTimeDisplay">25:00</div>
+                    <div class="text-lg opacity-80" id="focusTimerLabel">專注時間</div>
+                </div>
+            </div>
+            
+            <!-- Simple Controls -->
+            <div class="flex items-center justify-center space-x-6 mb-8">
+                <button class="w-16 h-16 border-2 border-white border-opacity-40 rounded-full flex items-center justify-center text-white hover:bg-white hover:bg-opacity-10 transition-all" id="focusPlayPauseBtn">
+                    <i class="fas fa-play text-xl" id="focusPlayPauseIcon"></i>
+                </button>
+                <button class="w-12 h-12 border-2 border-white border-opacity-40 rounded-full flex items-center justify-center text-white hover:bg-white hover:bg-opacity-10 transition-all" id="focusResetBtn">
+                    <i class="fas fa-redo"></i>
+                </button>
+            </div>
+            
+            <!-- Current Task -->
+            <div class="text-xl opacity-80 mb-4" id="focusCurrentTask">完成季度報告</div>
+            
+            <!-- Exit Focus Mode -->
+            <button class="px-6 py-2 border border-white border-opacity-40 rounded-lg text-white hover:bg-white hover:bg-opacity-10 transition-all" id="exitFocusMode">
+                退出專注模式
+            </button>
+        </div>
+    </div>
+
+    <!-- Completion Modal -->
+    <div class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50" id="completionModal">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 text-center p-8">
+            <div class="w-16 h-16 bg-success rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-check text-white text-2xl"></i>
+            </div>
+            <h3 class="text-xl font-semibold text-dark mb-2">番茄鐘完成！</h3>
+            <p class="text-gray-600 mb-6">恭喜你完成了一個專注時段，是時候休息一下了。</p>
+            
+            <div class="flex space-x-3">
+                <button class="flex-1 px-4 py-2 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50" id="skipBreakBtn">
+                    跳過休息
+                </button>
+                <button class="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-opacity-90" id="startBreakBtn">
+                    開始休息
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Timer state
+        let isRunning = false;
+        let timeLeft = 25 * 60; // 25 minutes in seconds
+        let currentMode = 'work';
+        let currentSession = 1;
+        let completedSessions = 3;
+        let timerInterval = null;
+        let isFocusMode = false;
+
+        // Timer elements
+        const timeDisplay = document.getElementById('timeDisplay');
+        const focusTimeDisplay = document.getElementById('focusTimeDisplay');
+        const timerLabel = document.getElementById('timerLabel');
+        const focusTimerLabel = document.getElementById('focusTimerLabel');
+        const playPauseBtn = document.getElementById('playPauseBtn');
+        const focusPlayPauseBtn = document.getElementById('focusPlayPauseBtn');
+        const playPauseIcon = document.getElementById('playPauseIcon');
+        const focusPlayPauseIcon = document.getElementById('focusPlayPauseIcon');
+        const timerCircle = document.getElementById('timerCircle');
+
+        // Mode buttons
+        const workModeBtn = document.getElementById('workMode');
+        const shortBreakModeBtn = document.getElementById('shortBreakMode');
+        const longBreakModeBtn = document.getElementById('longBreakMode');
+
+        // Focus mode elements
+        const focusToggle = document.getElementById('focusToggle');
+        const focusOverlay = document.getElementById('focusOverlay');
+        const exitFocusMode = document.getElementById('exitFocusMode');
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.getElementById('mainContent');
+
+        // Format time display
+        function formatTime(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = seconds % 60;
+            return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+        }
+
+        // Update timer display
+        function updateDisplay() {
+            const timeString = formatTime(timeLeft);
+            timeDisplay.textContent = timeString;
+            focusTimeDisplay.textContent = timeString;
+            
+            // Update progress circle
+            const totalDuration = currentMode === 'work' ? 25 * 60 : 5 * 60;
+            const progress = ((totalDuration - timeLeft) / totalDuration) * 360;
+            timerCircle.style.background = `conic-gradient(#FF6B35 0deg, #FF6B35 ${progress}deg, #e5e7eb ${progress}deg)`;
+        }
+
+        // Toggle timer
+        function toggleTimer() {
+            isRunning = !isRunning;
+            
+            if (isRunning) {
+                playPauseIcon.className = 'fas fa-pause text-xl';
+                focusPlayPauseIcon.className = 'fas fa-pause text-xl';
+                timerInterval = setInterval(() => {
+                    timeLeft--;
+                    updateDisplay();
+                    
+                    if (timeLeft <= 0) {
+                        completeSession();
+                    }
+                }, 1000);
+            } else {
+                playPauseIcon.className = 'fas fa-play text-xl';
+                focusPlayPauseIcon.className = 'fas fa-play text-xl';
+                clearInterval(timerInterval);
+            }
+        }
+
+        // Complete session
+        function completeSession() {
+            isRunning = false;
+            clearInterval(timerInterval);
+            
+            // Show completion modal
+            document.getElementById('completionModal').classList.remove('hidden');
+            document.getElementById('completionModal').classList.add('flex');
+        }
+
+        // Reset timer
+        function resetTimer() {
+            isRunning = false;
+            clearInterval(timerInterval);
+            timeLeft = currentMode === 'work' ? 25 * 60 : 5 * 60;
+            playPauseIcon.className = 'fas fa-play text-xl';
+            focusPlayPauseIcon.className = 'fas fa-play text-xl';
+            updateDisplay();
+        }
+
+        // Switch mode
+        function switchMode(mode) {
+            currentMode = mode;
+            resetTimer();
+            
+            // Update UI
+            workModeBtn.className = 'px-4 py-2 text-gray-600 hover:text-primary';
+            shortBreakModeBtn.className = 'px-4 py-2 text-gray-600 hover:text-primary';
+            longBreakModeBtn.className = 'px-4 py-2 text-gray-600 hover:text-primary';
+            
+            if (mode === 'work') {
+                workModeBtn.className = 'px-4 py-2 bg-white rounded-md shadow-sm text-primary font-medium';
+                timerLabel.textContent = '專注時間';
+                focusTimerLabel.textContent = '專注時間';
+                timeLeft = 25 * 60;
+            } else if (mode === 'shortBreak') {
+                shortBreakModeBtn.className = 'px-4 py-2 bg-white rounded-md shadow-sm text-primary font-medium';
+                timerLabel.textContent = '短休息';
+                focusTimerLabel.textContent = '短休息';
+                timeLeft = 5 * 60;
+            } else if (mode === 'longBreak') {
+                longBreakModeBtn.className = 'px-4 py-2 bg-white rounded-md shadow-sm text-primary font-medium';
+                timerLabel.textContent = '長休息';
+                focusTimerLabel.textContent = '長休息';
+                timeLeft = 15 * 60;
+            }
+            
+            updateDisplay();
+        }
+
+        // Toggle focus mode
+        function toggleFocusMode() {
+            isFocusMode = !isFocusMode;
+            
+            if (isFocusMode) {
+                focusOverlay.classList.remove('hidden');
+                focusOverlay.classList.add('flex');
+                document.body.classList.add('overflow-hidden');
+            } else {
+                focusOverlay.classList.add('hidden');
+                focusOverlay.classList.remove('flex');
+                document.body.classList.remove('overflow-hidden');
+            }
+        }
+
+        // Event listeners
+        playPauseBtn.addEventListener('click', toggleTimer);
+        focusPlayPauseBtn.addEventListener('click', toggleTimer);
+        
+        document.getElementById('resetBtn').addEventListener('click', resetTimer);
+        document.getElementById('focusResetBtn').addEventListener('click', resetTimer);
+        
+        workModeBtn.addEventListener('click', () => switchMode('work'));
+        shortBreakModeBtn.addEventListener('click', () => switchMode('shortBreak'));
+        longBreakModeBtn.addEventListener('click', () => switchMode('longBreak'));
+        
+        focusToggle.addEventListener('click', toggleFocusMode);
+        exitFocusMode.addEventListener('click', toggleFocusMode);
+        
+        // Completion modal buttons
+        document.getElementById('startBreakBtn').addEventListener('click', () => {
+            document.getElementById('completionModal').classList.add('hidden');
+            switchMode('shortBreak');
+        });
+        
+        document.getElementById('skipBreakBtn').addEventListener('click', () => {
+            document.getElementById('completionModal').classList.add('hidden');
+            switchMode('work');
+        });
+
+        // Initialize display
+        updateDisplay();
+        
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                e.preventDefault();
+                toggleTimer();
+            } else if (e.code === 'KeyR') {
+                resetTimer();
+            } else if (e.code === 'KeyF') {
+                toggleFocusMode();
+            }
+        });
+    </script>
+</body>
+</html>
