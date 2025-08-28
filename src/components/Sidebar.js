@@ -37,11 +37,6 @@ const Sidebar = ({ isOpen, onClose }) => {
       path: '/habits',
       icon: 'fas fa-heart',
       label: '習慣管理'
-    },
-    {
-      path: '/pomodoro',
-      icon: 'fas fa-clock',
-      label: '番茄鐘'
     }
   ];
 
