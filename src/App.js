@@ -1,10 +1,12 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Login from './components/Login';
 import './App.css';
 
 function AppContent() {
   const { user, loading } = useAuth();
+  const navigate = useNavigate();
 
   if (loading) {
     return (
@@ -15,7 +17,7 @@ function AppContent() {
   }
 
   if (!user) {
-    return <Login onSuccess={() => window.location.reload()} />;
+    return <Login onSuccess={() => navigate('/inbox')} />;
   }
 
   return (
