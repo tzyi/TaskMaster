@@ -181,19 +181,29 @@ const LabelManager = ({ isOpen, onClose, onLabelsChange, currentLabels = [] }) =
             <label className="block text-sm font-medium text-gray-700 mb-2">
               新增標籤
             </label>
-            <div className="flex items-center space-x-3">
-              <input
-                type="text"
-                placeholder="標籤名稱..."
-                value={newLabelName}
-                onChange={(e) => {
-                  setNewLabelName(e.target.value);
-                  setError('');
-                }}
-                onKeyPress={handleKeyPress}
-                maxLength={20}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-              />
+            <div className="space-y-3">
+              <div className="flex items-center space-x-3">
+                <input
+                  type="text"
+                  placeholder="標籤名稱..."
+                  value={newLabelName}
+                  onChange={(e) => {
+                    setNewLabelName(e.target.value);
+                    setError('');
+                  }}
+                  onKeyPress={handleKeyPress}
+                  maxLength={20}
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                />
+                
+                <button
+                  onClick={addLabel}
+                  disabled={!newLabelName.trim() || loading}
+                  className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                >
+                  {loading ? '新增中...' : '新增'}
+                </button>
+              </div>
               
               {/* 顏色選擇器 */}
               <div className="flex items-center space-x-1">
@@ -211,14 +221,6 @@ const LabelManager = ({ isOpen, onClose, onLabelsChange, currentLabels = [] }) =
                   />
                 ))}
               </div>
-              
-              <button
-                onClick={addLabel}
-                disabled={!newLabelName.trim() || loading}
-                className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {loading ? '新增中...' : '新增'}
-              </button>
             </div>
             <div className="text-xs text-gray-500 mt-1">
               標籤名稱最多20個字元
