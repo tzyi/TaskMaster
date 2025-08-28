@@ -29,6 +29,16 @@ export const AuthProvider = ({ children }) => {
     const { data: { subscription } } = authHelpers.onAuthStateChange(
       async (event, session) => {
         setSession(session);
+        
+        if (session?.user) {
+          // Automatically create/update user profile when user signs in
+          try {
+            await authHelpers.upsertUserProfile(session.user);
+          } catch (error) {
+            console.error('Error upserting user profile:', error);
+          }
+        }
+        
         setUser(session?.user ?? null);
         setLoading(false);
       }

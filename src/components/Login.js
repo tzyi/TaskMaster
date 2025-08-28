@@ -31,9 +31,16 @@ const Login = ({ onSuccess }) => {
 
   const handleGoogleSignIn = async () => {
     try {
+      setError('');
       const { error } = await signInWithGoogle();
       if (error) throw error;
+      
+      setShowSuccess(true);
+      setTimeout(() => {
+        if (onSuccess) onSuccess();
+      }, 1500);
     } catch (error) {
+      console.error('Google sign in error:', error);
       setError(error.message);
     }
   };
