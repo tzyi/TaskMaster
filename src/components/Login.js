@@ -1,31 +1,74 @@
 import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import './Login.css';
 
 const Login = ({ onSuccess }) => {
-  const { signIn, signInWithGoogle, loading: authLoading } = useAuth();
+  const { signIn, signInWithGoogle, resendConfirmation, loading: authLoading } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showEmailNotConfirmed, setShowEmailNotConfirmed] = useState(false);
+  const [resendingEmail, setResendingEmail] = useState(false);
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setIsSubmitting(true);
+
+    // 基本驗證
+    if (!email.trim()) {
+      setError('請輸入電子郵件');
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (!password.trim()) {
+      setError('請輸入密碼');
+      setIsSubmitting(false);
+      return;
+    }
 
     try {
-      const { data, error } = await signIn(email, password);
+      const { error } = await signIn(email, password);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Login error details:', error);
+        
+        // 處理特定的 Supabase 錯誤訊息
+        if (error.message.includes('email_not_confirmed') || 
+            error.message.includes('Email not confirmed')) {
+          setError('您的電子郵件尚未確認。請檢查您的郵箱並點擊確認連結。');
+          setShowEmailNotConfirmed(true);
+        } else if (error.message.includes('Invalid login credentials') || 
+                   error.message.includes('invalid_grant') ||
+                   error.message.includes('Invalid email or password') ||
+                   error.status === 400) {
+          setError('帳號或密碼錯誤，請檢查後重試');
+        } else if (error.message.includes('User not found')) {
+          setError('此帳戶不存在，請檢查電子郵件地址或立即註冊');
+        } else {
+          setError(`登入失敗：${error.message}`);
+        }
+        setIsSubmitting(false);
+        return;
+      }
 
+      // 登入成功
       setShowSuccess(true);
       setTimeout(() => {
-        if (onSuccess) onSuccess(data);
+        navigate('/inbox');
       }, 1500);
+
     } catch (error) {
-      setError(error.message);
+      console.error('Login error:', error);
+      setError('登入失敗，請稍後再試');
+      setIsSubmitting(false);
     }
   };
 
@@ -37,11 +80,42 @@ const Login = ({ onSuccess }) => {
       
       setShowSuccess(true);
       setTimeout(() => {
-        if (onSuccess) onSuccess();
+        navigate('/inbox');
       }, 1500);
     } catch (error) {
       console.error('Google sign in error:', error);
-      setError(error.message);
+      setError('Google 登入失敗，請稍後再試');
+    }
+  };
+
+  const handleResendConfirmation = async () => {
+    if (!email.trim()) {
+      setError('請先輸入您的電子郵件地址');
+      return;
+    }
+
+    try {
+      setResendingEmail(true);
+      setError('');
+      
+      const { error } = await resendConfirmation(email);
+      
+      if (error) {
+        setError(`重新發送失敗：${error.message}`);
+      } else {
+        setError('');
+        setShowSuccess(true);
+        setTimeout(() => {
+          setShowSuccess(false);
+          setShowEmailNotConfirmed(false);
+          setError('確認郵件已重新發送！請檢查您的郵箱。');
+        }, 2000);
+      }
+    } catch (error) {
+      console.error('Resend confirmation error:', error);
+      setError('重新發送確認郵件失敗，請稍後再試');
+    } finally {
+      setResendingEmail(false);
     }
   };
 
@@ -69,8 +143,18 @@ const Login = ({ onSuccess }) => {
 
         {/* Error Message */}
         {error && (
-          <div className="mb-6 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg">
-            {error}
+          <div className="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+            <p className="mb-2">{error}</p>
+            {showEmailNotConfirmed && (
+              <button
+                type="button"
+                onClick={handleResendConfirmation}
+                disabled={resendingEmail}
+                className="mt-2 px-4 py-2 bg-blue-500 text-white text-sm rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {resendingEmail ? '發送中...' : '重新發送確認郵件'}
+              </button>
+            )}
           </div>
         )}
 
@@ -136,11 +220,11 @@ const Login = ({ onSuccess }) => {
           {/* Login Button */}
           <button
             type="submit"
-            disabled={authLoading}
+            disabled={authLoading || isSubmitting}
             className="w-full bg-gradient-to-r from-primary to-orange-500 text-white py-3 px-6 rounded-lg font-semibold hover:from-orange-500 hover:to-primary transition-all duration-300 transform hover:-translate-y-1 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <i className="fas fa-sign-in-alt mr-2"></i>
-            {authLoading ? '登入中...' : '登入'}
+            {authLoading || isSubmitting ? '登入中...' : '登入'}
           </button>
         </form>
 
@@ -172,9 +256,12 @@ const Login = ({ onSuccess }) => {
         <div className="text-center mt-8">
           <p className="text-gray-600">
             還沒有帳戶？
-            <a href="#" className="text-primary hover:text-opacity-80 font-semibold transition-colors">
+            <Link 
+              to="/register" 
+              className="text-primary hover:text-opacity-80 font-semibold transition-colors ml-1"
+            >
               立即註冊
-            </a>
+            </Link>
           </p>
         </div>
       </div>

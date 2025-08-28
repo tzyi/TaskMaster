@@ -83,6 +83,10 @@ export const AuthProvider = ({ children }) => {
     return await authHelpers.resetPassword(email);
   };
 
+  const resendConfirmation = async (email) => {
+    return await authHelpers.resendConfirmation(email);
+  };
+
   const value = {
     user,
     session,
@@ -92,6 +96,7 @@ export const AuthProvider = ({ children }) => {
     signInWithGoogle,
     signOut,
     resetPassword,
+    resendConfirmation,
   };
 
   return (

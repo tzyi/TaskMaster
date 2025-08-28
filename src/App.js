@@ -27,10 +27,10 @@ function AppContent() {
           <div className="border-4 border-dashed border-gray-200 rounded-lg h-96 flex items-center justify-center">
             <div className="text-center">
               <h1 className="text-2xl font-bold text-gray-900 mb-4">
-                歡迎來到 TaskMaster！
+                頁面跳轉中...
               </h1>
               <p className="text-gray-600 mb-4">
-                您已成功登入。這裡是您的主儀表板。
+                歡迎來到 TaskMaster！
               </p>
               <p className="text-sm text-gray-500">
                 用戶: {user.email}

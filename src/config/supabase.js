@@ -15,10 +15,20 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 export const authHelpers = {
   // Sign in with email and password
   signIn: async (email, password) => {
+    console.log('Attempting to sign in with:', email);
+    console.log('Supabase URL:', supabaseUrl);
+    
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
+    
+    if (error) {
+      console.error('Supabase sign in error:', error);
+    } else {
+      console.log('Supabase sign in success:', data);
+    }
+    
     return { data, error };
   },
 
@@ -61,6 +71,15 @@ export const authHelpers = {
   resetPassword: async (email) => {
     const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/reset-password`
+    });
+    return { data, error };
+  },
+
+  // Resend email confirmation
+  resendConfirmation: async (email) => {
+    const { data, error } = await supabase.auth.resend({
+      type: 'signup',
+      email: email
     });
     return { data, error };
   },
