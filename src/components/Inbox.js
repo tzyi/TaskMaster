@@ -168,29 +168,52 @@ const Inbox = () => {
 
   // 添加任務
   const addTask = async (taskData, isModal = false) => {
-    if (!user || !taskData.title.trim()) return;
+    console.log('開始添加任務:', taskData);
+    
+    if (!user) {
+      console.error('用戶未登入');
+      alert('請先登入');
+      return;
+    }
+    
+    if (!taskData.title.trim()) {
+      console.error('任務標題為空');
+      alert('請輸入任務標題');
+      return;
+    }
 
     try {
+      console.log('準備插入任務到資料庫...');
+      
+      // 準備任務資料
+      const taskToInsert = {
+        user_id: user.id,
+        title: taskData.title.trim(),
+        description: (taskData.description || '').trim(),
+        due_date: taskData.due_date || null,
+        priority: taskData.priority || 4,
+        sort_order: tasks.length
+      };
+      
+      console.log('任務資料:', taskToInsert);
+
       const { data: taskResult, error: taskError } = await supabase
         .from('tasks')
-        .insert([{
-          user_id: user.id,
-          title: taskData.title.trim(),
-          description: taskData.description.trim(),
-          due_date: taskData.due_date || null,
-          priority: taskData.priority,
-          sort_order: tasks.length
-        }])
+        .insert([taskToInsert])
         .select()
         .single();
 
       if (taskError) {
-        console.error('Error creating task:', taskError);
+        console.error('建立任務時發生錯誤:', taskError);
+        alert(`建立任務失敗: ${taskError.message}`);
         return;
       }
 
+      console.log('任務建立成功:', taskResult);
+
       // 添加標籤關聯
-      if (taskData.labels.length > 0) {
+      if (taskData.labels && taskData.labels.length > 0) {
+        console.log('添加標籤關聯:', taskData.labels);
         const labelInserts = taskData.labels.map(labelId => ({
           task_id: taskResult.id,
           label_id: labelId
@@ -201,12 +224,15 @@ const Inbox = () => {
           .insert(labelInserts);
 
         if (labelError) {
-          console.error('Error adding task labels:', labelError);
+          console.error('添加標籤關聯時發生錯誤:', labelError);
+        } else {
+          console.log('標籤關聯添加成功');
         }
       }
 
       // 添加子任務
-      if (taskData.subtasks.length > 0) {
+      if (taskData.subtasks && taskData.subtasks.length > 0) {
+        console.log('添加子任務:', taskData.subtasks);
         const subtaskInserts = taskData.subtasks.map((subtask, index) => ({
           user_id: user.id,
           title: subtask.trim(),
@@ -219,7 +245,9 @@ const Inbox = () => {
           .insert(subtaskInserts);
 
         if (subtaskError) {
-          console.error('Error creating subtasks:', subtaskError);
+          console.error('建立子任務時發生錯誤:', subtaskError);
+        } else {
+          console.log('子任務建立成功');
         }
       }
 
@@ -236,14 +264,21 @@ const Inbox = () => {
       if (isModal) {
         setModalTask(resetData);
         setShowModal(false);
+        console.log('Modal已關閉，表單已重置');
       } else {
         setNewTask(resetData);
+        console.log('快速輸入表單已重置');
       }
 
       // 重新獲取任務列表
+      console.log('重新獲取任務列表...');
       await fetchTasks();
+      
+      console.log('任務添加流程完成！');
+      
     } catch (error) {
-      console.error('Error:', error);
+      console.error('添加任務時發生未預期的錯誤:', error);
+      alert(`發生錯誤: ${error.message}`);
     }
   };
 
@@ -539,7 +574,12 @@ const Inbox = () => {
 
             {newTask.title.trim() && (
               <button
-                onClick={() => addTask(newTask)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  console.log('快速添加按鈕被點擊');
+                  console.log('快速任務資料:', newTask);
+                  addTask(newTask);
+                }}
                 className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
               >
                 添加
@@ -734,7 +774,14 @@ const Inbox = () => {
                   取消
                 </button>
                 <button
-                  onClick={() => addTask(modalTask, true)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('添加任務按鈕被點擊');
+                    console.log('Modal任務資料:', modalTask);
+                    console.log('用戶資料:', user);
+                    addTask(modalTask, true);
+                  }}
                   disabled={!modalTask.title.trim()}
                   className="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                 >
