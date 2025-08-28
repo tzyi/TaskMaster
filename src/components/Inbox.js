@@ -318,6 +318,79 @@ const Inbox = () => {
     }
   };
 
+  // 刪除任務
+  const deleteTask = async (taskId, taskTitle) => {
+    // 確認對話框
+    const confirmed = window.confirm(`確定要刪除任務「${taskTitle}」嗎？\n\n此操作將同時刪除所有子任務，且無法復原。`);
+    
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      console.log(`開始刪除任務: ${taskId}`);
+
+      // 由於資料庫設定了CASCADE DELETE，刪除父任務時會自動刪除：
+      // 1. 所有子任務 (tasks表中parent_task_id關聯)
+      // 2. 所有標籤關聯 (task_labels表中task_id關聯)
+      const { error } = await supabase
+        .from('tasks')
+        .delete()
+        .eq('id', taskId);
+
+      if (error) {
+        console.error('刪除任務時發生錯誤:', error);
+        alert(`刪除任務失敗: ${error.message}`);
+        return;
+      }
+
+      console.log('任務刪除成功');
+      
+      // 重新獲取任務列表
+      await fetchTasks();
+      
+    } catch (error) {
+      console.error('刪除任務時發生未預期的錯誤:', error);
+      alert(`發生錯誤: ${error.message}`);
+    }
+  };
+
+  // 刪除子任務
+  const deleteSubtask = async (subtaskId, subtaskTitle, e) => {
+    e.stopPropagation();
+    
+    // 確認對話框
+    const confirmed = window.confirm(`確定要刪除子任務「${subtaskTitle}」嗎？\n\n此操作無法復原。`);
+    
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      console.log(`開始刪除子任務: ${subtaskId}`);
+
+      const { error } = await supabase
+        .from('tasks')
+        .delete()
+        .eq('id', subtaskId);
+
+      if (error) {
+        console.error('刪除子任務時發生錯誤:', error);
+        alert(`刪除子任務失敗: ${error.message}`);
+        return;
+      }
+
+      console.log('子任務刪除成功');
+      
+      // 重新獲取任務列表
+      await fetchTasks();
+      
+    } catch (error) {
+      console.error('刪除子任務時發生未預期的錯誤:', error);
+      alert(`發生錯誤: ${error.message}`);
+    }
+  };
+
   useEffect(() => {
     if (user) {
       fetchTasks();
@@ -386,7 +459,7 @@ const Inbox = () => {
     return (
       <div 
         key={task.id} 
-        className={`bg-white rounded-lg shadow-sm border ${task.is_completed ? 'opacity-60 bg-gray-50' : ''} ${priority.border} border-l-4 p-4 transition-all hover:shadow-md`}
+        className={`group bg-white rounded-lg shadow-sm border ${task.is_completed ? 'opacity-60 bg-gray-50' : ''} ${priority.border} border-l-4 p-4 transition-all hover:shadow-md`}
       >
         <div className="flex items-start space-x-3">
           <button
@@ -423,7 +496,7 @@ const Inbox = () => {
             {task.subtasks && task.subtasks.length > 0 && (
               <div className="mt-3 ml-2 space-y-2">
                 {task.subtasks.map(subtask => (
-                  <div key={subtask.id} className="flex items-center space-x-2">
+                  <div key={subtask.id} className="group/subtask flex items-center space-x-2 hover:bg-gray-50 rounded px-1 py-1 -mx-1">
                     <button
                       onClick={() => toggleSubtaskCompletion(subtask.id, subtask.is_completed)}
                       className={`w-4 h-4 rounded-sm border-2 flex items-center justify-center transition-colors ${
@@ -434,47 +507,69 @@ const Inbox = () => {
                     >
                       {subtask.is_completed && <i className="fas fa-check text-white text-xs"></i>}
                     </button>
-                    <span className={`text-sm ${subtask.is_completed ? 'line-through text-gray-500' : 'text-gray-700'}`}>
+                    <span className={`text-sm flex-1 ${subtask.is_completed ? 'line-through text-gray-500' : 'text-gray-700'}`}>
                       {subtask.title}
                     </span>
+                    {/* 子任務刪除按鈕 */}
+                    <button
+                      onClick={(e) => deleteSubtask(subtask.id, subtask.title, e)}
+                      className="opacity-0 group-hover/subtask:opacity-100 transition-opacity duration-200 p-1 hover:bg-red-50 rounded text-gray-400 hover:text-red-600"
+                      title="刪除子任務"
+                    >
+                      <i className="fas fa-times text-xs"></i>
+                    </button>
                   </div>
                 ))}
               </div>
             )}
 
-            {/* 任務信息 */}
-            <div className="flex items-center space-x-4 mt-3 text-xs text-gray-500">
-              {task.due_date && (
-                <span className={`flex items-center space-x-1 ${isOverdue(task.due_date) && !task.is_completed ? 'text-red-600' : ''}`}>
-                  <i className="far fa-calendar"></i>
-                  <span>{formatDate(task.due_date)}</span>
-                  {isOverdue(task.due_date) && !task.is_completed && <i className="fas fa-exclamation-triangle text-red-600"></i>}
-                </span>
-              )}
+            {/* 任務信息和操作按鈕 */}
+            <div className="flex items-center justify-between mt-3">
+              <div className="flex items-center space-x-4 text-xs text-gray-500">
+                {task.due_date && (
+                  <span className={`flex items-center space-x-1 ${isOverdue(task.due_date) && !task.is_completed ? 'text-red-600' : ''}`}>
+                    <i className="far fa-calendar"></i>
+                    <span>{formatDate(task.due_date)}</span>
+                    {isOverdue(task.due_date) && !task.is_completed && <i className="fas fa-exclamation-triangle text-red-600"></i>}
+                  </span>
+                )}
+                
+                {taskLabels.length > 0 && (
+                  <div className="flex items-center space-x-1">
+                    {taskLabels.map(label => (
+                      <span 
+                        key={label.id}
+                        className="px-2 py-1 rounded-full text-xs"
+                        style={{
+                          backgroundColor: `${label.color}20`,
+                          color: label.color
+                        }}
+                      >
+                        #{label.name}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                
+                {totalSubtasks > 0 && (
+                  <span className="flex items-center space-x-1">
+                    <i className="fas fa-list text-xs"></i>
+                    <span>{completedSubtasks}/{totalSubtasks} 完成</span>
+                  </span>
+                )}
+              </div>
               
-              {taskLabels.length > 0 && (
-                <div className="flex items-center space-x-1">
-                  {taskLabels.map(label => (
-                    <span 
-                      key={label.id}
-                      className="px-2 py-1 rounded-full text-xs"
-                      style={{
-                        backgroundColor: `${label.color}20`,
-                        color: label.color
-                      }}
-                    >
-                      #{label.name}
-                    </span>
-                  ))}
-                </div>
-              )}
-              
-              {totalSubtasks > 0 && (
-                <span className="flex items-center space-x-1">
-                  <i className="fas fa-list text-xs"></i>
-                  <span>{completedSubtasks}/{totalSubtasks} 完成</span>
-                </span>
-              )}
+              {/* 刪除按鈕 */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  deleteTask(task.id, task.title);
+                }}
+                className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-1 hover:bg-red-50 rounded text-gray-400 hover:text-red-600"
+                title="刪除任務"
+              >
+                <i className="fas fa-trash text-sm"></i>
+              </button>
             </div>
           </div>
         </div>
