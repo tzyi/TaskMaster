@@ -30,14 +30,14 @@ const Project = () => {
 
   return (
     <PageLayout>
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900 mb-4">{project.title}</h1>
+      <div className="max-w-4xl mx-auto">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">{project.title}</h1>
         <p className="text-gray-600 mb-6">{project.description}</p>
         
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="text-center py-12">
-            <i className={`${project.icon} text-6xl ${project.color} mb-4`}></i>
-            <h2 className="text-2xl font-semibold text-gray-800 mb-2">{project.title}</h2>
+        <div className="bg-white rounded-lg shadow p-4 sm:p-6">
+          <div className="text-center py-8 sm:py-12">
+            <i className={`${project.icon} text-4xl sm:text-6xl ${project.color} mb-4`}></i>
+            <h2 className="text-xl sm:text-2xl font-semibold text-gray-800 mb-2">{project.title}</h2>
             <p className="text-gray-600">
               這裡將顯示 {project.title} 的詳細內容和任務列表
             </p>

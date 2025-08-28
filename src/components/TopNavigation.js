@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
-const TopNavigation = () => {
+const TopNavigation = ({ onToggleSidebar }) => {
   const { user, signOut } = useAuth();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const navigate = useNavigate();
@@ -23,22 +23,25 @@ const TopNavigation = () => {
   };
 
   return (
-    <header className="bg-white shadow-sm border-b border-gray-200 px-6 py-4 fixed top-0 left-0 right-0 z-30">
+    <header className="bg-white shadow-sm border-b border-gray-200 px-4 sm:px-6 py-3 sm:py-4 fixed top-0 left-0 right-0 z-30">
       <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <button className="lg:hidden p-2 rounded-lg hover:bg-gray-100">
+        <div className="flex items-center space-x-2 sm:space-x-4">
+          <button 
+            onClick={onToggleSidebar}
+            className="lg:hidden p-2 rounded-lg hover:bg-gray-100"
+          >
             <i className="fas fa-bars text-gray-600"></i>
           </button>
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-red-500 rounded-lg flex items-center justify-center">
               <i className="fas fa-check text-white text-sm"></i>
             </div>
-            <h1 className="text-xl font-bold text-gray-800">TaskMaster</h1>
+            <h1 className="text-lg sm:text-xl font-bold text-gray-800">TaskMaster</h1>
           </div>
         </div>
         
         {/* Search Bar */}
-        <div className="flex-1 max-w-xl mx-8">
+        <div className="hidden md:block flex-1 max-w-xl mx-4 lg:mx-8">
           <div className="relative">
             <input 
               type="text" 
@@ -50,12 +53,15 @@ const TopNavigation = () => {
         </div>
         
         {/* User Menu */}
-        <div className="flex items-center space-x-4">
-          <button className="p-2 rounded-lg hover:bg-gray-100 relative">
+        <div className="flex items-center space-x-2 sm:space-x-4">
+          <button className="md:block hidden p-2 rounded-lg hover:bg-gray-100">
+            <i className="fas fa-search text-gray-600"></i>
+          </button>
+          <button className="hidden sm:block p-2 rounded-lg hover:bg-gray-100 relative">
             <i className="fas fa-bell text-gray-600"></i>
             <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></span>
           </button>
-          <button className="p-2 rounded-lg hover:bg-gray-100">
+          <button className="hidden sm:block p-2 rounded-lg hover:bg-gray-100">
             <i className="fas fa-cog text-gray-600"></i>
           </button>
           <div className="relative">
@@ -78,7 +84,7 @@ const TopNavigation = () => {
             
             {/* User Menu Dropdown */}
             {showUserMenu && (
-              <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+              <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
                 <div className="px-4 py-3 border-b border-gray-100">
                   <div className="flex items-center space-x-3">
                     {user?.user_metadata?.picture || user?.user_metadata?.avatar_url ? (

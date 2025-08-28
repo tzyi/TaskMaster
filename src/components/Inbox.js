@@ -37,11 +37,11 @@ const Inbox = () => {
 
   return (
     <PageLayout>
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900 mb-4">收件匣</h1>
+      <div className="max-w-4xl mx-auto">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">收件匣</h1>
         <p className="text-gray-600 mb-6">管理您的所有待辦事項</p>
         
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 sm:p-6 mb-6">
           <h2 className="text-lg font-semibold text-blue-900 mb-3">帳戶資訊</h2>
           {loading ? (
             <div className="flex items-center">
@@ -51,7 +51,7 @@ const Inbox = () => {
           ) : (
             <div className="space-y-2">
               {profile?.avatar_url && (
-                <div className="flex items-center mb-3">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center mb-3">
                   <img 
                     src={profile.avatar_url} 
                     alt="頭像" 
@@ -82,10 +82,10 @@ const Inbox = () => {
           )}
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="text-center py-12">
-            <i className="fas fa-inbox text-6xl text-orange-500 mb-4"></i>
-            <h3 className="text-2xl font-semibold text-gray-800 mb-2">歡迎使用 TaskMaster</h3>
+        <div className="bg-white rounded-lg shadow p-4 sm:p-6">
+          <div className="text-center py-8 sm:py-12">
+            <i className="fas fa-inbox text-4xl sm:text-6xl text-orange-500 mb-4"></i>
+            <h3 className="text-xl sm:text-2xl font-semibold text-gray-800 mb-2">歡迎使用 TaskMaster</h3>
             <p className="text-gray-600">您的待辦事項管理中心</p>
           </div>
         </div>
