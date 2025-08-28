@@ -48,6 +48,18 @@ const Inbox = () => {
 
   const [subtaskInput, setSubtaskInput] = useState('');
   const [showCompletedTasks, setShowCompletedTasks] = useState(false);
+  
+  // 編輯任務狀態
+  const [editingTask, setEditingTask] = useState(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editTaskData, setEditTaskData] = useState({
+    title: '',
+    description: '',
+    due_date: '',
+    priority: 4,
+    labels: [],
+    subtasks: []
+  });
 
   // 獲取任務列表
   const fetchTasks = useCallback(async () => {
@@ -391,6 +403,134 @@ const Inbox = () => {
     }
   };
 
+  // 打開編輯任務Modal
+  const openEditModal = (task) => {
+    console.log('開始編輯任務:', task);
+    
+    setEditingTask(task);
+    
+    // 預填任務資料
+    setEditTaskData({
+      title: task.title || '',
+      description: task.description || '',
+      due_date: task.due_date ? new Date(task.due_date).toISOString().split('T')[0] : '',
+      priority: task.priority || 4,
+      labels: task.task_labels?.map(tl => tl.label_id) || [],
+      subtasks: task.subtasks?.map(st => st.title) || []
+    });
+    
+    setShowEditModal(true);
+  };
+
+  // 更新任務
+  const updateTask = async () => {
+    if (!editingTask || !editTaskData.title.trim()) {
+      alert('請輸入任務標題');
+      return;
+    }
+
+    try {
+      console.log('開始更新任務:', editingTask.id);
+      console.log('更新資料:', editTaskData);
+
+      // 1. 更新主任務
+      const { error: taskError } = await supabase
+        .from('tasks')
+        .update({
+          title: editTaskData.title.trim(),
+          description: editTaskData.description.trim(),
+          due_date: editTaskData.due_date || null,
+          priority: editTaskData.priority
+        })
+        .eq('id', editingTask.id);
+
+      if (taskError) {
+        console.error('更新任務時發生錯誤:', taskError);
+        alert(`更新任務失敗: ${taskError.message}`);
+        return;
+      }
+
+      // 2. 更新標籤關聯
+      // 先刪除現有的標籤關聯
+      const { error: deleteLabelError } = await supabase
+        .from('task_labels')
+        .delete()
+        .eq('task_id', editingTask.id);
+
+      if (deleteLabelError) {
+        console.error('刪除舊標籤關聯時發生錯誤:', deleteLabelError);
+      }
+
+      // 添加新的標籤關聯
+      if (editTaskData.labels.length > 0) {
+        const labelInserts = editTaskData.labels.map(labelId => ({
+          task_id: editingTask.id,
+          label_id: labelId
+        }));
+
+        const { error: labelError } = await supabase
+          .from('task_labels')
+          .insert(labelInserts);
+
+        if (labelError) {
+          console.error('更新標籤關聯時發生錯誤:', labelError);
+        }
+      }
+
+      // 3. 更新子任務
+      // 先刪除所有現有子任務
+      const { error: deleteSubtasksError } = await supabase
+        .from('tasks')
+        .delete()
+        .eq('parent_task_id', editingTask.id);
+
+      if (deleteSubtasksError) {
+        console.error('刪除舊子任務時發生錯誤:', deleteSubtasksError);
+      }
+
+      // 添加新的子任務
+      if (editTaskData.subtasks.length > 0) {
+        const subtaskInserts = editTaskData.subtasks.map((subtask, index) => ({
+          user_id: user.id,
+          title: String(subtask).trim(),
+          parent_task_id: editingTask.id,
+          sort_order: index,
+          priority: 4,
+          is_completed: false
+        }));
+
+        const { error: subtaskError } = await supabase
+          .from('tasks')
+          .insert(subtaskInserts);
+
+        if (subtaskError) {
+          console.error('更新子任務時發生錯誤:', subtaskError);
+        }
+      }
+
+      console.log('任務更新成功');
+
+      // 關閉編輯Modal
+      setShowEditModal(false);
+      setEditingTask(null);
+      setEditTaskData({
+        title: '',
+        description: '',
+        due_date: '',
+        priority: 4,
+        labels: [],
+        subtasks: []
+      });
+
+      // 重新獲取任務列表
+      await fetchTasks();
+
+    } catch (error) {
+      console.error('更新任務時發生未預期的錯誤:', error);
+      alert(`發生錯誤: ${error.message}`);
+    }
+  };
+
   useEffect(() => {
     if (user) {
       fetchTasks();
@@ -475,9 +615,22 @@ const Inbox = () => {
           
           <div className="flex-1">
             <div className="flex items-center justify-between">
-              <h3 className={`font-medium ${task.is_completed ? 'line-through text-gray-500' : 'text-gray-900'}`}>
-                {task.title}
-              </h3>
+              <div className="flex items-center space-x-2 flex-1">
+                <h3 className={`font-medium ${task.is_completed ? 'line-through text-gray-500' : 'text-gray-900'}`}>
+                  {task.title}
+                </h3>
+                {/* 編輯按鈕 */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openEditModal(task);
+                  }}
+                  className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-1 hover:bg-blue-50 rounded text-gray-400 hover:text-blue-600"
+                  title="編輯任務"
+                >
+                  <i className="fas fa-edit text-sm"></i>
+                </button>
+              </div>
               <div className="flex items-center space-x-2">
                 <i className={`${priority.icon} text-sm`} style={{color: priority.color.includes('red') ? '#dc2626' : priority.color.includes('orange') ? '#ea580c' : priority.color.includes('yellow') ? '#ca8a04' : '#6b7280'}}></i>
                 <span className={`px-2 py-1 text-xs rounded-full ${priority.color}`}>
@@ -881,6 +1034,162 @@ const Inbox = () => {
                   className="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   添加任務
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 編輯任務 Modal */}
+      {showEditModal && editingTask && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">編輯任務</h3>
+                <button
+                  onClick={() => setShowEditModal(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <i className="fas fa-times"></i>
+                </button>
+              </div>
+              
+              <div className="space-y-4">
+                <input
+                  type="text"
+                  placeholder="任務標題..."
+                  value={editTaskData.title}
+                  onChange={(e) => setEditTaskData(prev => ({ ...prev, title: e.target.value }))}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                />
+                
+                <textarea
+                  placeholder="詳細描述..."
+                  value={editTaskData.description}
+                  onChange={(e) => setEditTaskData(prev => ({ ...prev, description: e.target.value }))}
+                  rows={3}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                />
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">截止日期</label>
+                    <input
+                      type="date"
+                      value={editTaskData.due_date}
+                      onChange={(e) => setEditTaskData(prev => ({ ...prev, due_date: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">重要程度</label>
+                    <select
+                      value={editTaskData.priority}
+                      onChange={(e) => setEditTaskData(prev => ({ ...prev, priority: parseInt(e.target.value) }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    >
+                      {PRIORITY_OPTIONS.map(option => (
+                        <option key={option.value} value={option.value}>{option.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* 標籤選擇 */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">標籤</label>
+                  <div className="flex flex-wrap gap-2">
+                    {labels.map(label => (
+                      <button
+                        key={label.id}
+                        onClick={() => {
+                          const newLabels = editTaskData.labels.includes(label.id)
+                            ? editTaskData.labels.filter(id => id !== label.id)
+                            : [...editTaskData.labels, label.id];
+                          setEditTaskData(prev => ({ ...prev, labels: newLabels }));
+                        }}
+                        className={`px-3 py-1 text-xs rounded-full border transition-colors ${
+                          editTaskData.labels.includes(label.id)
+                            ? 'border-orange-500 bg-orange-50 text-orange-700'
+                            : 'border-gray-300 text-gray-600 hover:border-orange-500'
+                        }`}
+                      >
+                        #{label.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 子任務編輯 */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">子任務</label>
+                  <div className="space-y-2">
+                    {editTaskData.subtasks.map((subtask, index) => (
+                      <div key={index} className="flex items-center space-x-2">
+                        <span className="text-sm text-gray-700 flex-1">{subtask}</span>
+                        <button
+                          onClick={() => {
+                            const newSubtasks = editTaskData.subtasks.filter((_, i) => i !== index);
+                            setEditTaskData(prev => ({ ...prev, subtasks: newSubtasks }));
+                          }}
+                          className="text-red-500 hover:text-red-700"
+                        >
+                          <i className="fas fa-times text-xs"></i>
+                        </button>
+                      </div>
+                    ))}
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="text"
+                        placeholder="添加子任務..."
+                        value={subtaskInput}
+                        onChange={(e) => setSubtaskInput(e.target.value)}
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter' && subtaskInput.trim()) {
+                            setEditTaskData(prev => ({ 
+                              ...prev, 
+                              subtasks: [...prev.subtasks, subtaskInput.trim()] 
+                            }));
+                            setSubtaskInput('');
+                          }
+                        }}
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm"
+                      />
+                      {subtaskInput.trim() && (
+                        <button
+                          onClick={() => {
+                            setEditTaskData(prev => ({ 
+                              ...prev, 
+                              subtasks: [...prev.subtasks, subtaskInput.trim()] 
+                            }));
+                            setSubtaskInput('');
+                          }}
+                          className="px-3 py-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200"
+                        >
+                          <i className="fas fa-plus"></i>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end space-x-3 mt-6">
+                <button
+                  onClick={() => setShowEditModal(false)}
+                  className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                >
+                  取消
+                </button>
+                <button
+                  onClick={updateTask}
+                  disabled={!editTaskData.title.trim()}
+                  className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  更新任務
                 </button>
               </div>
             </div>
