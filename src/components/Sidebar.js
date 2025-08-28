@@ -25,7 +25,7 @@ const Sidebar = ({ isOpen, onClose }) => {
     {
       path: '/today',
       icon: 'fas fa-calendar-day',
-      label: '今天',
+      label: '便條紙',
       count: 8,
       countColor: 'bg-orange-500'
     },
