@@ -110,7 +110,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         </nav>
 
         {/* Projects Section */}
-        <div className="mt-8">
+        {/* <div className="mt-8">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
               項目
@@ -136,10 +136,10 @@ const Sidebar = ({ isOpen, onClose }) => {
               </Link>
             ))}
           </nav>
-        </div>
+        </div> */}
 
         {/* Labels Section */}
-        <div className="mt-8">
+        {/* <div className="mt-8">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
               標籤
@@ -158,7 +158,7 @@ const Sidebar = ({ isOpen, onClose }) => {
               </span>
             ))}
           </div>
-        </div>
+        </div> */}
       </div>
     </aside>
     </>
