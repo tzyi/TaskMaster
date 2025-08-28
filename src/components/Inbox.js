@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../config/supabase';
 import PageLayout from './PageLayout';
+import LabelManager from './LabelManager';
 
 const PRIORITY_OPTIONS = [
   { value: 1, label: '緊急且重要', color: 'bg-red-100 text-red-800', icon: 'fas fa-exclamation-triangle', border: 'border-red-500' },
@@ -48,6 +49,7 @@ const Inbox = () => {
 
   const [subtaskInput, setSubtaskInput] = useState('');
   const [showCompletedTasks, setShowCompletedTasks] = useState(false);
+  const [showLabelManager, setShowLabelManager] = useState(false);
   
   // 編輯任務狀態
   const [editingTask, setEditingTask] = useState(null);
@@ -69,7 +71,7 @@ const Inbox = () => {
       console.log('正在獲取任務列表...');
       
       // 先檢查tasks表是否存在
-      const { data: testData, error: testError } = await supabase
+      const { error: testError } = await supabase
         .from('tasks')
         .select('id')
         .limit(1);
@@ -150,7 +152,7 @@ const Inbox = () => {
       console.log('正在獲取標籤列表...');
       
       // 先檢查labels表是否存在
-      const { data: testData, error: testError } = await supabase
+      const { error: testError } = await supabase
         .from('labels')
         .select('id')
         .limit(1);
@@ -529,6 +531,11 @@ const Inbox = () => {
       console.error('更新任務時發生未預期的錯誤:', error);
       alert(`發生錯誤: ${error.message}`);
     }
+  };
+
+  // 處理標籤管理更新
+  const handleLabelsChange = (updatedLabels) => {
+    setLabels(updatedLabels);
   };
 
   useEffect(() => {
@@ -937,7 +944,17 @@ const Inbox = () => {
 
                 {/* 標籤選擇 */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">標籤</label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-sm font-medium text-gray-700">標籤</label>
+                    <button
+                      onClick={() => setShowLabelManager(true)}
+                      className="text-xs text-orange-600 hover:text-orange-700 flex items-center space-x-1"
+                      title="管理標籤"
+                    >
+                      <i className="fas fa-cog text-xs"></i>
+                      <span>管理</span>
+                    </button>
+                  </div>
                   <div className="flex flex-wrap gap-2">
                     {labels.map(label => (
                       <button
@@ -957,6 +974,17 @@ const Inbox = () => {
                         #{label.name}
                       </button>
                     ))}
+                    {labels.length === 0 && (
+                      <div className="text-sm text-gray-500">
+                        <span>尚無標籤，</span>
+                        <button
+                          onClick={() => setShowLabelManager(true)}
+                          className="text-orange-600 hover:text-orange-700 underline"
+                        >
+                          立即建立
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -1100,7 +1128,17 @@ const Inbox = () => {
 
                 {/* 標籤選擇 */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">標籤</label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-sm font-medium text-gray-700">標籤</label>
+                    <button
+                      onClick={() => setShowLabelManager(true)}
+                      className="text-xs text-orange-600 hover:text-orange-700 flex items-center space-x-1"
+                      title="管理標籤"
+                    >
+                      <i className="fas fa-cog text-xs"></i>
+                      <span>管理</span>
+                    </button>
+                  </div>
                   <div className="flex flex-wrap gap-2">
                     {labels.map(label => (
                       <button
@@ -1120,6 +1158,17 @@ const Inbox = () => {
                         #{label.name}
                       </button>
                     ))}
+                    {labels.length === 0 && (
+                      <div className="text-sm text-gray-500">
+                        <span>尚無標籤，</span>
+                        <button
+                          onClick={() => setShowLabelManager(true)}
+                          className="text-orange-600 hover:text-orange-700 underline"
+                        >
+                          立即建立
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -1196,6 +1245,14 @@ const Inbox = () => {
           </div>
         </div>
       )}
+
+      {/* 標籤管理 Modal */}
+      <LabelManager
+        isOpen={showLabelManager}
+        onClose={() => setShowLabelManager(false)}
+        onLabelsChange={handleLabelsChange}
+        currentLabels={labels}
+      />
     </PageLayout>
   );
 };

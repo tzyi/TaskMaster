@@ -1,8 +1,14 @@
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { supabase } from '../config/supabase';
+import LabelManager from './LabelManager';
 
 const Sidebar = ({ isOpen, onClose }) => {
   const location = useLocation();
+  const { user } = useAuth();
+  const [labels, setLabels] = useState([]);
+  const [showLabelManager, setShowLabelManager] = useState(false);
 
   const isActive = (path) => {
     return location.pathname === path;
@@ -40,32 +46,37 @@ const Sidebar = ({ isOpen, onClose }) => {
     }
   ];
 
-  const projects = [
-    {
-      name: '工作項目',
-      color: 'bg-red-500',
-      count: 12,
-      path: '/project/work'
-    },
-    {
-      name: '個人成長',
-      color: 'bg-green-500',
-      count: 8,
-      path: '/project/personal'
-    },
-    {
-      name: '健康生活',
-      color: 'bg-blue-500',
-      count: 5,
-      path: '/project/health'
-    }
-  ];
+  // 獲取使用者的標籤
+  const fetchLabels = useCallback(async () => {
+    if (!user) return;
 
-  const labels = [
-    { name: '#重要', color: 'bg-purple-100 text-purple-800' },
-    { name: '#學習', color: 'bg-green-100 text-green-800' },
-    { name: '#工作', color: 'bg-blue-100 text-blue-800' }
-  ];
+    try {
+      const { data, error } = await supabase
+        .from('labels')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('name');
+
+      if (error) {
+        console.error('Error fetching labels:', error);
+      } else {
+        setLabels(data || []);
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  }, [user]);
+
+  // 處理標籤管理更新
+  const handleLabelsChange = (updatedLabels) => {
+    setLabels(updatedLabels);
+  };
+
+  useEffect(() => {
+    if (user) {
+      fetchLabels();
+    }
+  }, [user, fetchLabels]);
 
   return (
     <>
@@ -139,27 +150,56 @@ const Sidebar = ({ isOpen, onClose }) => {
         </div> */}
 
         {/* Labels Section */}
-        {/* <div className="mt-8">
+        <div className="mt-8">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
               標籤
             </h3>
-            <button className="w-6 h-6 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center transition-colors">
+            <button 
+              onClick={() => setShowLabelManager(true)}
+              className="w-6 h-6 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center transition-colors"
+              title="管理標籤"
+            >
               <i className="fas fa-plus text-gray-600 text-xs"></i>
             </button>
           </div>
-          <div className="flex flex-wrap gap-2">
-            {labels.map((label) => (
-              <span
-                key={label.name}
-                className={`px-3 py-1 ${label.color} text-sm rounded-full cursor-pointer hover:opacity-80 transition-opacity`}
-              >
-                {label.name}
-              </span>
-            ))}
+          <div className="space-y-1">
+            {labels.length === 0 ? (
+              <div className="text-sm text-gray-500 text-center py-4">
+                <i className="fas fa-tag text-lg mb-2"></i>
+                <p>尚無標籤</p>
+                <button
+                  onClick={() => setShowLabelManager(true)}
+                  className="text-orange-600 hover:text-orange-700 underline text-xs mt-1"
+                >
+                  立即建立
+                </button>
+              </div>
+            ) : (
+              labels.map((label) => (
+                <div
+                  key={label.id}
+                  className="flex items-center px-3 py-2 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+                >
+                  <div
+                    className="w-3 h-3 rounded-full mr-3"
+                    style={{ backgroundColor: label.color }}
+                  />
+                  <span className="text-sm text-gray-700">#{label.name}</span>
+                </div>
+              ))
+            )}
           </div>
-        </div> */}
+        </div>
       </div>
+
+      {/* 標籤管理 Modal */}
+      <LabelManager
+        isOpen={showLabelManager}
+        onClose={() => setShowLabelManager(false)}
+        onLabelsChange={handleLabelsChange}
+        currentLabels={labels}
+      />
     </aside>
     </>
   );
