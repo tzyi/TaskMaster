@@ -84,7 +84,7 @@ const TopNavigation = ({ onToggleSidebar }) => {
             
             {/* User Menu Dropdown */}
             {showUserMenu && (
-              <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+              <div className="absolute right-0 mt-2 w-80 sm:w-75 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
                 <div className="px-4 py-3 border-b border-gray-100">
                   <div className="flex items-center space-x-3">
                     {user?.user_metadata?.picture || user?.user_metadata?.avatar_url ? (
